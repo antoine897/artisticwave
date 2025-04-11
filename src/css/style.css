@@ -1,0 +1,119 @@
+.books {
+    display: flex;
+
+    .book {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+
+      img {
+        width: 200px;
+        height: 300px;
+        object-fit: cover;
+      }
+
+      button {
+        padding: 3px 6px;
+        background-color: white;
+        cursor: pointer;
+      }
+      .delete {
+        border: 1px solid rgb(245, 191, 191);
+        color: rgb(242, 100, 100);
+      }
+      .update {
+        border: 1px solid rgb(204, 204, 243);
+        color: rgb(139, 139, 234);
+      }
+    }
+  }
+
+  .form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+
+    input {
+      width: 250px;
+      padding: 10px;
+      border: 1px solid gray;
+    }
+
+    textarea {
+      padding: 10px;
+    }
+
+    button {
+      border: none;
+      padding: 10px;
+      background-color: white;
+      background-color: teal;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+  }
+
+  
+  .addHome {
+    padding: 10px;
+    margin-top: 20px;
+    cursor: pointer;
+    border: none;
+    background-color: teal;
+    color: white;
+    font-weight: bold;
+  }
+
+
+  
+.login-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.login-form-container {
+  width: 100%;
+  max-width: 400px;
+  padding: 20px;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  background-color: #fff;
+}
+
+.login-title {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.login-form {
+  margin-bottom: 15px;
+}
+
+.login-button {
+  width: 100%;
+}
+
+
+.form-check {
+  display: inline-flex; /* Makes sure both elements are on the same line */
+  align-items: center; /* Vertically aligns the checkbox with the label */
+}
+
+.form-check-label {
+  margin-right: 8px; /* Adds spacing between the label and checkbox */
+}
+.form-check-input {
+  border: 2px solid #000 !important;  /* This makes the border thicker */
+  border-radius: 4px; /* Optional: makes the corners rounded */
+}
+
+
+.red-text {
+  color: red !important;
+}
