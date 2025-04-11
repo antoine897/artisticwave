@@ -21,7 +21,7 @@ const Login = () => {
     signInWithEmailAndPassword(auth, email, password)
     .then(cred => {
             setUserDetails(cred.user);
-            navigate('/users');     
+            navigate('/schedule');     
     })
     .catch(err => {
       setErrorMessage("Username or Password is incorrect");

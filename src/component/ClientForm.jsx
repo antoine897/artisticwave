@@ -1,18 +1,28 @@
-import axios from "axios";
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import "../css/style.css";
-import TimePicker from 'react-time-picker';
+import { useNavigate, useParams } from "react-router-dom";
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { COLLECTIONS } from '../constants/collectionConst'
+import "../css/style.css";
 import 'react-time-picker/dist/TimePicker.css';
 
 import createDocument from '../methods/createDocument';
+import updateDocumentWithId from '../methods/updateDocumentWithId';
+import fetchDocumentWithId from '../methods/fetchDocumentWithId';
 
-const AddClient = () => {
+const ClientForm = () => {
+  const { id } = useParams();  // Get the client id from URL
   const navigate = useNavigate();
   const auth = getAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [relativeName, setRelativeName] = useState('');
+  const [relativePhoneNumber, setRelativePhoneNumber] = useState('');
+  const [clientType, setClientType] = useState('');
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -27,68 +37,74 @@ const AddClient = () => {
     return () => unsubscribe();
   }, [auth, navigate]);
 
-  const [error, setError] = useState(false);
+  useEffect(() => {
+    const fetchClient = async () => {
+      if (!id) return;
 
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [relativeName, setRelativeName] = useState('');
-  const [relativePhoneNumber, setRelativePhoneNumber] = useState('');
-  const [clientType, setClientType] = useState('');
+      try {
+        const clientData = await fetchDocumentWithId(COLLECTIONS.CLIENTS, id);
+        if (clientData) {
+          setIsEditMode(true);
+          setFirstName(clientData.firstName || '');
+          setLastName(clientData.lastName || '');
+          setPhoneNumber(clientData.phoneNumber || '');
+          setRelativeName(clientData.relativeName || '');
+          setRelativePhoneNumber(clientData.relativePhoneNumber || '');
+          setClientType(clientData.clientType || '');
+        }
+      } catch (error) {
+        console.error("Error fetching client: ", error);
+      }
+    };
 
-  const validatePhone = (phone) => {
-    if (!phone) return true;
-    const pattern = /^(03|06|70|71|76|78|80|81)\d{6}$/;
-    return pattern.test(phone);
-  };
+    fetchClient();
+  }, [id]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!validatePhone(phoneNumber) || !validatePhone(relativePhoneNumber)) {
-      alert("Phone number must be 8 digits and start with a valid prefix (03, 06, 70, etc.)");
-      return;
-    }
-
-    const newClient = {
+    const clientData = {
       firstName,
       lastName,
       phoneNumber,
       clientType,
       relativeName,
-      relativePhoneNumber
+      relativePhoneNumber,
+      createdDate: new Date().toISOString()
     };
 
     try {
-      await createDocument(newClient, 'clients');
-      alert('Client Created Successfully');
-      navigate(-1);
+      if (isEditMode && id) {
+        await updateDocumentWithId(COLLECTIONS.CLIENTS, clientData, id);
+        alert('Client Updated Successfully');
+      } else {
+        await createDocument(clientData, COLLECTIONS.CLIENTS);
+        alert('Client Created Successfully');
+      }
+      navigate('/clients');
     } catch (e) {
-      console.error('Error adding client: ', e);
-      setError(true);
+      alert('Error saving client. Please try again later or call Antonato');
     }
   };
 
-  if (isLoading) {
-    return <div>Loading</div>;
-  }
-
-  if (!isAuthorized) {
-    return null;
-  }
+  if (isLoading) return <div>Loading...</div>;
+  if (!isAuthorized) return null;
 
   return (
     <div className="container py-5">
       <div className="w-50 mx-auto">
-        <h2 className="mb-3 mt-5">Add New Student</h2>
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <h2 className="mb-3 mt-5">{isEditMode ? 'Update Client' : 'Add New Client'}</h2>
+          <button className="btn btn-outline-primary fw-bold fs-5" onClick={() => navigate('/clients')}>← Back</button>
+        </div>
         <form onSubmit={handleSubmit}>
+          {/* Form Fields */}
           <div className="mb-3">
             <label htmlFor="FirstName" className="form-label">First Name</label>
             <input
               type="text"
               className="form-control"
               placeholder="Enter first name"
-              name="FirstName"
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
               required
@@ -100,7 +116,6 @@ const AddClient = () => {
             <input
               className="form-control"
               placeholder="Enter last name"
-              name="LastName"
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
               required
@@ -113,29 +128,18 @@ const AddClient = () => {
               type="tel"
               className="form-control"
               placeholder="Enter phone number"
-              name="PhoneNumber"
               value={phoneNumber}
-              pattern="(03|06|70|71|76|78|80|81)[0-9]{6}"
-              onChange={(e) => {
-                setPhoneNumber(e.target.value);
-                e.target.setCustomValidity(""); // clear previous messages
-              }}
-              onInvalid={(e) => {
-                if (!e.target.validity.valid) {
-                  e.target.setCustomValidity("Phone must start with a valid prefix 03/06/70... and be exactly 8 digits.");
-                }
-              }}
+              onChange={(e) => setPhoneNumber(e.target.value)}
               required
             />
           </div>
 
           <div className="mb-3">
-            <label htmlFor="Family" className="form-label">A relative name</label>
+            <label htmlFor="Family" className="form-label">Relative Name</label>
             <input
               type="text"
               className="form-control"
-              placeholder="Enter a relative Name"
-              name="RelativeName"
+              placeholder="Enter relative name"
               value={relativeName}
               onChange={(e) => setRelativeName(e.target.value)}
             />
@@ -146,19 +150,9 @@ const AddClient = () => {
             <input
               type="tel"
               className="form-control"
-              placeholder="Enter the relative phone number"
-              name="RelativePhoneNumber"
-              pattern="(03|06|70|71|76|78|80|81)[0-9]{6}"
+              placeholder="Enter relative phone number"
               value={relativePhoneNumber}
-              onChange={(e) => {
-                setRelativePhoneNumber(e.target.value);
-                e.target.setCustomValidity(""); // clear previous messages
-              }}
-              onInvalid={(e) => {
-                if (!e.target.validity.valid) {
-                  e.target.setCustomValidity("Phone must start with a valid prefix 03/06/70... and be exactly 8 digits.");
-                }
-              }}
+              onChange={(e) => setRelativePhoneNumber(e.target.value)}
             />
           </div>
 
@@ -166,25 +160,23 @@ const AddClient = () => {
             <label htmlFor="Type" className="form-label">Client Type</label>
             <select
               className="form-select"
-              name="Type"
               value={clientType}
               onChange={(e) => setClientType(e.target.value)}
               required
             >
-              <option value="" disabled hidden>Select client type</option>
+              <option value="" disabled>Select client type</option>
               <option value="Private">Private</option>
               <option value="Class">Class</option>
             </select>
           </div>
 
-          <button type="submit" className="btn btn-primary">Add</button>
+          <button type="submit" className="btn btn-primary">
+            {isEditMode ? 'Update Client' : 'Add'}
+          </button>
         </form>
-
-        {error && <p className="text-danger mt-3">Something went wrong!</p>}
-        <Link to="../Users" className="btn btn-link mt-3">See all Students</Link>
       </div>
     </div>
   );
 };
 
-export default AddClient;
+export default ClientForm;

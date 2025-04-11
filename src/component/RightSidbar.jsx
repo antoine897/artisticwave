@@ -7,7 +7,9 @@ import { useNavigate } from 'react-router-dom';
 
 const RightSidebar = ({ onClose }) => {
   const navigate = useNavigate();
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isClientsMenuOpen, setIsClientsMenuOpen] = useState(false);
+  const [isServicesMenuOpen, setIsServicesMenuOpen] = useState(false);
+
   const [isFinancialMenuOpen, setIsFinancialMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
 
@@ -51,17 +53,34 @@ const RightSidebar = ({ onClose }) => {
         <div
           className="fw-bold text-start"
           style={{ cursor: "pointer" }}
-          onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+          onClick={() => setIsClientsMenuOpen(!isClientsMenuOpen)}
         >
-          User
+          Clients
         </div>
-        <div className={`collapse ${isUserMenuOpen ? "show" : ""}`}>
+        <div className={`collapse ${isClientsMenuOpen ? "show" : ""}`}>
           <ul className="list-unstyled text-start ps-3 mt-2">
             <li>
-              <Link to="/addClient" className="text-decoration-none">Add new client</Link>
+              <Link to="/clients" className="text-decoration-none">All clients</Link>
             </li>
             <li>
               <Link to="/UnpaidUsers" className="text-decoration-none">Unpaid user</Link>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div className="p-3">
+        <div
+          className="fw-bold text-start"
+          style={{ cursor: "pointer" }}
+          onClick={() => setIsServicesMenuOpen(!isServicesMenuOpen)}
+        >
+          Services
+        </div>
+        <div className={`collapse ${isServicesMenuOpen ? "show" : ""}`}>
+          <ul className="list-unstyled text-start ps-3 mt-2">
+            <li>
+              <Link to="/services" className="text-decoration-none">All Services</Link>
             </li>
           </ul>
         </div>

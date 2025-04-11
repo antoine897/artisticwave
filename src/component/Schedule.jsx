@@ -2,11 +2,11 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import axios from "axios";
 import { Link } from "react-router-dom";
-import RightSidebar from "../component/RightSidbar"; // Import sidebar component
+import RightSidebar from "./RightSidbar"; // Import sidebar component
 import "../css/style.css";
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
-const Users = () => {
+const Schedule = () => {
   const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -215,4 +215,4 @@ const Users = () => {
   );
 };
 
-export default Users;
+export default Schedule;
