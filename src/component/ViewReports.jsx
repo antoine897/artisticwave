@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useNavigate } from 'react-router-dom';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
 const ViewReports = () => {
   const [users, setUsers] = useState([]);
@@ -14,6 +16,26 @@ const ViewReports = () => {
   const [years, setYears] = useState([]);
   const [showTotalAmount, setShowTotalAmount] = useState(false);
   const [showUnpaidMessage, setShowUnpaidMessage] = useState(false);
+
+  /* ********************************************************************** */
+    // Verify that the user was authorized
+    const navigate = useNavigate();
+    const auth = getAuth();
+    const [isLoading, setIsLoading] = useState(true);
+    const [isAuthorized, setIsAuthorized] = useState(false);
+    useEffect(() => {
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+        if (!user) {
+          navigate('/');
+        } else {
+          setIsAuthorized(true);
+          setIsLoading(false);
+        }
+      });
+  
+      return () => unsubscribe();
+    }, [auth, navigate]);
+    /* ********************************************************************** */
 
   useEffect(() => {
     const fetchAllUser = async () => {
@@ -147,6 +169,21 @@ const ViewReports = () => {
     setShowTotalAmount(!showTotalAmount);
     setShowUnpaidMessage(!showUnpaidMessage); // Toggle the unpaid message visibility as well
   };
+
+   // This is to display a cicular loading while fetching data and authorisation
+  /* ********************************************************************** */
+  if (isLoading) {
+    return (
+      <div>
+        Loading
+      </div>
+    );
+  }
+
+  if (!isAuthorized) {
+    return null;
+  }
+  /* ********************************************************************** */
 
   return (
     <div className="container mt-5">

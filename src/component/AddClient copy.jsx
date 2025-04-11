@@ -1,11 +1,33 @@
 import axios from "axios";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../css/style.css";
 import TimePicker from 'react-time-picker';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import 'react-time-picker/dist/TimePicker.css';
 
-const Add = () => {
+const AddClient = () => {
+  /* ********************************************************************** */
+    // Verify that the user was authorized
+    const navigate = useNavigate();
+    const auth = getAuth();
+    const [isLoading, setIsLoading] = useState(true);
+    const [isAuthorized, setIsAuthorized] = useState(false);
+    useEffect(() => {
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+        if (!user) {
+          navigate('/');
+        } else {
+          setIsAuthorized(true);
+          setIsLoading(false);
+        }
+      });
+  
+      return () => unsubscribe();
+    }, [auth, navigate]);
+    /* ********************************************************************** */
+
+  const [error, setError] = useState(false);
   const [users, setUsers] = useState({
     FirstName: "",
     LastName: "",
@@ -16,9 +38,6 @@ const Add = () => {
     Status: "Unpaid",
     Amount: "",
   });
-
-  const [error, setError] = useState(false);
-  const navigate = useNavigate();
 
   const handleChange = (e) => {
     if (e.target.type === "checkbox") {
@@ -58,6 +77,21 @@ const Add = () => {
       setError(true);
     }
   };
+
+   // This is to display a cicular loading while fetching data and authorisation
+  /* ********************************************************************** */
+  if (isLoading) {
+    return (
+      <div>
+        Loading
+      </div>
+    );
+  }
+
+  if (!isAuthorized) {
+    return null;
+  }
+  /* ********************************************************************** */
 
   return (
     <div className="container py-5">
@@ -170,4 +204,4 @@ const Add = () => {
   );
 };
 
-export default Add;
+export default AddClient;

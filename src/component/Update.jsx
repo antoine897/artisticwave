@@ -2,11 +2,30 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import "../css/style.css";
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
 const UpdateUserForm = () => {
-  const { userId } = useParams(); // Get userId from the URL
-  const navigate = useNavigate(); // Use useNavigate instead of useHistory
+    /* ********************************************************************** */
+    // Verify that the user was authorized
+    const navigate = useNavigate();
+    const auth = getAuth();
+    const [isLoading, setIsLoading] = useState(true);
+    const [isAuthorized, setIsAuthorized] = useState(false);
+    useEffect(() => {
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+        if (!user) {
+          navigate('/');
+        } else {
+          setIsAuthorized(true);
+          setIsLoading(false);
+        }
+      });
+  
+      return () => unsubscribe();
+    }, [auth, navigate]);
+    /* ********************************************************************** */
 
+  const { userId } = useParams(); // Get userId from the URL
   const [user, setUser] = useState({
     FirstName: "",
     LastName: "",
@@ -102,6 +121,21 @@ const UpdateUserForm = () => {
       setErrorMessage('Error updating user data. Please try again.');
     }
   };
+
+    // This is to display a cicular loading while fetching data and authorisation
+  /* ********************************************************************** */
+  if (isLoading) {
+    return (
+      <div>
+        Loading
+      </div>
+    );
+  }
+
+  if (!isAuthorized) {
+    return null;
+  }
+  /* ********************************************************************** */
 
   return (
     <div className="container d-flex justify-content-center align-items-center" style={{ height: '100vh' }}>

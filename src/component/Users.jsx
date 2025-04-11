@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from 'react-router-dom';
 import axios from "axios";
 import { Link } from "react-router-dom";
 import RightSidebar from "../component/RightSidbar"; // Import sidebar component
 import "../css/style.css";
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
 const Users = () => {
   const [users, setUsers] = useState([]);
@@ -10,6 +12,27 @@ const Users = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const usersPerPage = 5;
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Sidebar toggle
+
+  /* ********************************************************************** */
+  // Verify that the user was authorized
+  const navigate = useNavigate();
+  const auth = getAuth();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        navigate('/');
+      } else {
+        setIsAuthorized(true);
+        setIsLoading(false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [auth, navigate]);
+  /* ********************************************************************** */
+
 
   useEffect(() => {
     const fetchAllUser = async () => {
@@ -62,6 +85,21 @@ const Users = () => {
   const goToPreviousPage = () => {
     if (currentPage > 1) setCurrentPage(currentPage - 1);
   };
+
+  // This is to display a cicular loading while fetching data and authorisation
+  /* ********************************************************************** */
+  if (isLoading) {
+    return (
+      <div>
+        Loading
+      </div>
+    );
+  }
+
+  if (!isAuthorized) {
+    return null;
+  }
+  /* ********************************************************************** */
 
   return (
     <div className="d-flex" style={{ minHeight: "100vh" }}>

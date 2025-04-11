@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { SignOut } from '../methods/SignOut';
+import { useNavigate } from 'react-router-dom';
+
+
 
 const RightSidebar = ({ onClose }) => {
+  const navigate = useNavigate();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isFinancialMenuOpen, setIsFinancialMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
@@ -13,6 +18,17 @@ const RightSidebar = ({ onClose }) => {
       setUser(storedUser);
     }
   }, []);
+
+    // Handle sign-out
+    const handleSignOut = () => {
+      SignOut()
+        .then(() => {
+          navigate('/');
+        })
+        .catch((error) => {
+          throw Error('Sign out failed:', error.message);
+        });
+    };
 
   return (
     <div
@@ -31,7 +47,6 @@ const RightSidebar = ({ onClose }) => {
         ></button>
       </div>
 
-      {/* User Section */}
       <div className="p-3">
         <div
           className="fw-bold text-start"
@@ -43,7 +58,7 @@ const RightSidebar = ({ onClose }) => {
         <div className={`collapse ${isUserMenuOpen ? "show" : ""}`}>
           <ul className="list-unstyled text-start ps-3 mt-2">
             <li>
-              <Link to="/Add" className="text-decoration-none">Add new user</Link>
+              <Link to="/addClient" className="text-decoration-none">Add new client</Link>
             </li>
             <li>
               <Link to="/UnpaidUsers" className="text-decoration-none">Unpaid user</Link>
@@ -78,6 +93,29 @@ const RightSidebar = ({ onClose }) => {
           </ul>
         </div>
       </div>
+
+      {/* Financial Section */}
+      <div className="p-3 mt-0">
+        <div
+          className="fw-bold text-start"
+          style={{ cursor: "pointer" }}
+          onClick={() => handleSignOut()}
+        >
+          SignOut
+        </div>
+        <div className={`collapse ${isFinancialMenuOpen ? "show" : ""}`}>
+          <ul className="list-unstyled text-start ps-3 mt-2">
+         
+              <li>
+                <Link to={`/ViewReports`} className="text-decoration-none">
+                  View reports
+                </Link>
+              </li>
+            
+          </ul>
+        </div>
+      </div>
+
     </div>
   );
 };

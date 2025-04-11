@@ -1,8 +1,31 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
+import { useNavigate } from 'react-router-dom';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
 const UnpaidUsers = () => {
+
+    /* ********************************************************************** */
+    // Verify that the user was authorized
+    const navigate = useNavigate();
+    const auth = getAuth();
+    const [isLoading, setIsLoading] = useState(true);
+    const [isAuthorized, setIsAuthorized] = useState(false);
+    useEffect(() => {
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+        if (!user) {
+          navigate('/');
+        } else {
+          setIsAuthorized(true);
+          setIsLoading(false);
+        }
+      });
+  
+      return () => unsubscribe();
+    }, [auth, navigate]);
+    /* ********************************************************************** */
+
   const [users, setUsers] = useState([]);
 
   useEffect(() => {
@@ -26,6 +49,21 @@ const UnpaidUsers = () => {
       axios.delete(`http://localhost:8800/users/${iduser}`).catch((err) => console.log(err));
     }
   };
+
+    // This is to display a cicular loading while fetching data and authorisation
+  /* ********************************************************************** */
+  if (isLoading) {
+    return (
+      <div>
+        Loading
+      </div>
+    );
+  }
+
+  if (!isAuthorized) {
+    return null;
+  }
+  /* ********************************************************************** */
 
   return (
       <div className="container my-5">

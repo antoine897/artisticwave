@@ -1,35 +1,32 @@
 import React, { useState } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { Form, Button, Container, Row, Col } from 'react-bootstrap';
 
+import { useAuth } from '../auth/AuthContext';
+import { auth } from "../config/firebase.config";
+import { signInWithEmailAndPassword } from 'firebase/auth'
+
 const Login = () => {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
   const navigate = useNavigate();
+  
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const { setUserDetails } = useAuth();
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleSubmit = async (e) => {
+
     e.preventDefault();
-
-    if (!username || !password) {
-      setErrorMessage("Please fill all the fields");
-      return;
-    }
-
-    try {
-      const response = await axios.post(`http://localhost:8800/login`, {
-        username,
-        password,
-      });
-      if (response.data.success) {
-        navigate("Users");
-      } else {
-        setErrorMessage("Invalid credentials");
-      }
-    } catch (err) {
+        
+    signInWithEmailAndPassword(auth, email, password)
+    .then(cred => {
+            setUserDetails(cred.user);
+            navigate('/users');     
+    })
+    .catch(err => {
       setErrorMessage("Username or Password is incorrect");
-    }
+    });
+
   };
 
   return (
@@ -40,10 +37,11 @@ const Login = () => {
           <Form onSubmit={handleSubmit}>
             <Form.Group className="mb-3" controlId="formBasicEmail">
               <Form.Control
-                type="text"
-                placeholder="Username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                type="email"
+                placeholder="Mail Address"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </Form.Group>
 
@@ -51,6 +49,7 @@ const Login = () => {
               <Form.Control
                 type="password"
                 placeholder="Password"
+                required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
