@@ -20,6 +20,7 @@ const ServiceForm = () => {
   const [serviceName, setServiceName] = useState('');
   const [serviceUnit, setServiceUnit] = useState('');
   const [serviceUnitPrice, setServiceUnitPrice] = useState('');
+  const [serviceDescription, setServiceDescription] = useState('');
 
 
   useEffect(() => {
@@ -46,6 +47,7 @@ const ServiceForm = () => {
           setServiceName(serviceData.serviceName || '');
           setServiceUnit(serviceData.serviceUnit || '');
           setServiceUnitPrice(serviceData.serviceUnitPrice || '');
+          setServiceDescription(serviceData.serviceDescription || '');
         }
       } catch (error) {
         console.error("Error fetching service: ", error);
@@ -62,6 +64,7 @@ const ServiceForm = () => {
       serviceName,
       serviceUnit,
       serviceUnitPrice,
+      serviceDescription,
       createdDate: new Date().toISOString()
     };
 
@@ -126,7 +129,17 @@ const ServiceForm = () => {
               required
             />
           </div>
-
+          <div className="mb-3">
+            <label htmlFor="ServiceName" className="form-label">Service Description</label>
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Enter service Description"
+              value={serviceDescription}
+              onChange={(e) => setServiceDescription(e.target.value)}
+              required
+            />
+          </div>
           <button type="submit" className="btn btn-primary">
             {isEditMode ? 'Update Service' : 'Add'}
           </button>

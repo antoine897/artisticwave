@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { useNavigate } from 'react-router-dom';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
-const UnpaidUsers = () => {
+const UnpaidClients = () => {
 
     /* ********************************************************************** */
     // Verify that the user was authorized
@@ -66,9 +66,11 @@ const UnpaidUsers = () => {
   /* ********************************************************************** */
 
   return (
-      <div className="container my-5">
-        <h2>Unpaid Users</h2>
-    
+    <div className="container py-5">
+    <div className="d-flex justify-content-between align-items-center mb-4">
+      <h2 className="mb-0">All Clients</h2>
+      <button className="btn btn-outline-primary fw-bold fs-5" onClick={() => navigate('/schedule')}>← Back</button>
+    </div>
         {users.length === 0 ? (
           <div className="alert alert-info mt-4">
             There is no unpaid student.
@@ -116,13 +118,11 @@ const UnpaidUsers = () => {
             </tbody>
           </table>
         )}
+    </div>
+        
     
-        <Link to="/Users" className="btn btn-secondary mt-3">
-          Back to Student page
-        </Link>
-      </div>
     );
     
 };
 
-export default UnpaidUsers;
+export default UnpaidClients;

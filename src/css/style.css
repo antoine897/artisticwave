@@ -117,3 +117,116 @@
 .red-text {
   color: red !important;
 }
+
+/* Sidebar Styles */
+.right-sidebar {
+  position: fixed;
+  top: 0;
+  right: -250px;  /* Initially off-screen */
+  width: 250px;
+  height: 100%;
+  background-color: #f8f9fa;
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+  z-index: 9999;
+  padding: 15px;
+  transition: right 0.3s ease-in-out;
+}
+
+/* Sidebar Styles */
+.right-sidebar {
+  position: fixed;
+  top: 0;
+  right: -250px;  /* Initially off-screen */
+  width: 250px;
+  height: 100%;
+  background-color: #f8f9fa;
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+  z-index: 9999;
+  padding: 15px;
+  transition: right 0.3s ease-in-out;
+}
+
+/* Sidebar Styles */
+.right-sidebar {
+  position: fixed;
+  top: 0;
+  right: -250px;  /* Initially off-screen */
+  width: 250px;   /* Sidebar width */
+  height: 100%;
+  background-color: #f8f9fa;
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+  z-index: 9999;
+  padding: 15px;
+  transition: right 0.3s ease-in-out;
+}
+
+/* Sidebar open state */
+.right-sidebar.open {
+  right: 0;  /* Move into view */
+}
+
+
+
+
+body {
+  overflow-x: hidden; 
+}
+
+.btn-outline-primary {
+  transition: opacity 0.3s ease-in-out;
+}
+
+.full-page {
+  min-height: 100vh;
+  width: 100%;
+  padding: 30px;
+  background-color: #f8f9fa;
+}
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 250px;
+  background-color: #fff;
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  transform: translateX(100%);
+  transition: transform 0.3s ease-in-out;
+  overflow-y: auto;
+}
+
+.menu-hover {
+  transition: color 0.3s ease; /* Smooth color transition */
+}
+
+.menu-hover:hover {
+  color: #007bff; /* Change the color on hover (you can customize it) */
+  cursor: pointer; /* Change the cursor to indicate it's clickable */
+}
+
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.pagination-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-top: 20px;
+}
+
+.pagination-container .btn {
+  margin: 0 10px; /* Add spacing between buttons */
+}
+
+.page-number {
+  flex: 1;
+  text-align: center;
+}
+

@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthContext';
 
 
-import Login from "./component/Login";
+import Login from './component/Login';
 import Schedule from "./component/Schedule";
 import ListClients from "./component/ListClients";
 import ClientForm from "./component/ClientForm";
@@ -11,8 +11,9 @@ import ListServices from "./component/ListServices";
 import ServiceForm from './component/ServiceForm';
 
 import UpdateUserForm from "./component/Update";
-import UnpaidUsers from "./component/UnpaidUser";
+import UnpaidClients from "./component/UnpaidClients";
 import ViewReports from "./component/ViewReports";
+import AppointmentForm from './component/Appointments';
 
 function App() {
   return (
@@ -30,8 +31,9 @@ function App() {
               
               
               <Route path="/updateuserForm/:userId" element={<UpdateUserForm />} />
-              <Route path="/unpaidusers" element={<UnpaidUsers />} />
+              <Route path="/UnpaidClients" element={<UnpaidClients />} />
               <Route path="/viewReports" element={<ViewReports />} />
+              <Route path="/Appointments/Add" element={<AppointmentForm />} />
             </Routes>
         </Router>
     </AuthProvider>

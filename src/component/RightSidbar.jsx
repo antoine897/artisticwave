@@ -1,52 +1,28 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { SignOut } from '../methods/SignOut';
 import { useNavigate } from 'react-router-dom';
 
-
-
-const RightSidebar = ({ onClose }) => {
+const RightSidebar = ({ onClose, isOpen }) => {
   const navigate = useNavigate();
   const [isClientsMenuOpen, setIsClientsMenuOpen] = useState(false);
   const [isServicesMenuOpen, setIsServicesMenuOpen] = useState(false);
+  const [isAppointmentsMenuOpen, setIsAppointmentsMenuOpen] = useState(false);
 
-  const [isFinancialMenuOpen, setIsFinancialMenuOpen] = useState(false);
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
-    // Example: Load user from localStorage or API
-    const storedUser = JSON.parse(localStorage.getItem("user"));
-    if (storedUser) {
-      setUser(storedUser);
-    }
-  }, []);
-
-    // Handle sign-out
-    const handleSignOut = () => {
-      SignOut()
-        .then(() => {
-          navigate('/');
-        })
-        .catch((error) => {
-          throw Error('Sign out failed:', error.message);
-        });
-    };
+  const handleSignOut = () => {
+    SignOut()
+      .then(() => {
+        navigate('/');
+      })
+      .catch((error) => {
+        console.error('Sign out failed:', error.message);
+      });
+  };
 
   return (
-    <div
-      className="bg-light border-start shadow mt-5"
-      style={{
-        width: "250px",
-        minHeight: "100vh",
-        transition: "all 0.3s ease-in-out",
-      }}
-    >
+    <div className={`right-sidebar ${isOpen ? "open" : ""}`}>
       <div className="position-relative p-3 border-bottom text-center">
-        <h5 className="mb-0 text-primary">Menu</h5>
-        <button
-          className="btn-close position-absolute end-0 top-50 translate-middle-y me-3"
-          onClick={onClose}
-        ></button>
+        <h5 className="mb-0 text-primary menu-hover" onClick={onClose}>Menu</h5>
       </div>
 
       <div className="p-3">
@@ -60,10 +36,13 @@ const RightSidebar = ({ onClose }) => {
         <div className={`collapse ${isClientsMenuOpen ? "show" : ""}`}>
           <ul className="list-unstyled text-start ps-3 mt-2">
             <li>
-              <Link to="/clients" className="text-decoration-none">All clients</Link>
+              <Link to="/clients" className="text-decoration-none" onClick={onClose}>All clients</Link>
             </li>
             <li>
-              <Link to="/UnpaidUsers" className="text-decoration-none">Unpaid user</Link>
+              <Link to="/clients/add" className="text-decoration-none" onClick={onClose}>Add New Client</Link>
+            </li>
+            <li>
+              <Link to="/UnpaidClients" className="text-decoration-none" onClick={onClose}>Unpaid Clients</Link>
             </li>
           </ul>
         </div>
@@ -80,61 +59,41 @@ const RightSidebar = ({ onClose }) => {
         <div className={`collapse ${isServicesMenuOpen ? "show" : ""}`}>
           <ul className="list-unstyled text-start ps-3 mt-2">
             <li>
-              <Link to="/services" className="text-decoration-none">All Services</Link>
+              <Link to="/services" className="text-decoration-none" onClick={onClose}>All Services</Link>
+            </li>
+            <li>
+              <Link to="/services/Add" className="text-decoration-none" onClick={onClose}>Add Service</Link>
             </li>
           </ul>
         </div>
       </div>
 
-
-
-
-
-
-      {/* Financial Section */}
-      <div className="p-3 mt-0">
+      <div className="p-3">
         <div
           className="fw-bold text-start"
           style={{ cursor: "pointer" }}
-          onClick={() => setIsFinancialMenuOpen(!isFinancialMenuOpen)}
+          onClick={() => setIsAppointmentsMenuOpen(!isAppointmentsMenuOpen)}
         >
-          Financial
+          Appointments
         </div>
-        <div className={`collapse ${isFinancialMenuOpen ? "show" : ""}`}>
+        <div className={`collapse ${isAppointmentsMenuOpen ? "show" : ""}`}>
           <ul className="list-unstyled text-start ps-3 mt-2">
-         
-              <li>
-                <Link to={`/ViewReports`} className="text-decoration-none">
-                  View reports
-                </Link>
-              </li>
-            
+            <li>
+              <Link to="/appointments/Add" className="text-decoration-none" onClick={onClose}>Add Appointment</Link>
+            </li>
           </ul>
         </div>
       </div>
 
-      {/* Financial Section */}
-      <div className="p-3 mt-0">
+      <div className="p-3">
         <div
           className="fw-bold text-start"
           style={{ cursor: "pointer" }}
-          onClick={() => handleSignOut()}
+          onClick={handleSignOut}
         >
-          SignOut
-        </div>
-        <div className={`collapse ${isFinancialMenuOpen ? "show" : ""}`}>
-          <ul className="list-unstyled text-start ps-3 mt-2">
-         
-              <li>
-                <Link to={`/ViewReports`} className="text-decoration-none">
-                  View reports
-                </Link>
-              </li>
-            
-          </ul>
+          Sign Out
         </div>
       </div>
-
     </div>
   );
 };

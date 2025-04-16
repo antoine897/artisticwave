@@ -22,7 +22,11 @@ const ClientForm = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [relativeName, setRelativeName] = useState('');
   const [relativePhoneNumber, setRelativePhoneNumber] = useState('');
-  const [clientType, setClientType] = useState('');
+  const [phoneNumberError, setPhoneNumberError] = useState('');
+  const [relativePhoneNumberError, setRelativePhoneNumberError] = useState('');
+
+  // Regex pattern for validating the phone number
+  const phoneNumberPattern = /^(06|03|78|70|71|80|81)\d{6}$/;
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -50,7 +54,6 @@ const ClientForm = () => {
           setPhoneNumber(clientData.phoneNumber || '');
           setRelativeName(clientData.relativeName || '');
           setRelativePhoneNumber(clientData.relativePhoneNumber || '');
-          setClientType(clientData.clientType || '');
         }
       } catch (error) {
         console.error("Error fetching client: ", error);
@@ -63,14 +66,28 @@ const ClientForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Validate phone numbers
+    if (!phoneNumberPattern.test(phoneNumber)) {
+      setPhoneNumberError('Phone number must be 8 digits and start with 06, 03, 78, 70, 71, 80, or 81.');
+      return;
+    }
+
+    if (relativePhoneNumber && !phoneNumberPattern.test(relativePhoneNumber)) {
+      setRelativePhoneNumberError('Relative phone number must be 8 digits and start with 06, 03, 78, 70, 71, 80, or 81.');
+      return;
+    }
+
+    // Clear any previous errors
+    setPhoneNumberError('');
+    setRelativePhoneNumberError('');
+
     const clientData = {
       firstName,
       lastName,
       phoneNumber,
-      clientType,
       relativeName,
       relativePhoneNumber,
-      createdDate: new Date().toISOString()
+      createdDate: new Date().toISOString(),
     };
 
     try {
@@ -132,6 +149,7 @@ const ClientForm = () => {
               onChange={(e) => setPhoneNumber(e.target.value)}
               required
             />
+            {phoneNumberError && <div className="text-danger">{phoneNumberError}</div>}
           </div>
 
           <div className="mb-3">
@@ -154,20 +172,7 @@ const ClientForm = () => {
               value={relativePhoneNumber}
               onChange={(e) => setRelativePhoneNumber(e.target.value)}
             />
-          </div>
-
-          <div className="mb-3">
-            <label htmlFor="Type" className="form-label">Client Type</label>
-            <select
-              className="form-select"
-              value={clientType}
-              onChange={(e) => setClientType(e.target.value)}
-              required
-            >
-              <option value="" disabled>Select client type</option>
-              <option value="Private">Private</option>
-              <option value="Class">Class</option>
-            </select>
+            {relativePhoneNumberError && <div className="text-danger">{relativePhoneNumberError}</div>}
           </div>
 
           <button type="submit" className="btn btn-primary">

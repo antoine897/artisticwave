@@ -81,6 +81,7 @@ const ListServices = () => {
               <th>Service Name</th>
               <th>Service Unit</th>
               <th>Service Unit Price</th>
+              <th>Service Description</th>
               <th>Created</th>
               <th>Actions</th>
             </tr>
@@ -91,6 +92,7 @@ const ListServices = () => {
                 <td>{service.serviceName}</td>
                 <td>{service.serviceUnit} h</td>
                 <td>{service.serviceUnitPrice} $</td>
+                <td>{service.serviceDescription}</td>
                 <td>{new Date(service.createdDate).toLocaleString()}</td>
                 <td>
                   <button
@@ -112,7 +114,7 @@ const ListServices = () => {
         </table>
       </div>
 
-      <Link to="../services/add" className="btn btn-primary mt-3">Add New Service</Link>
+      {/* <Link to="../services/add" className="btn btn-primary mt-3">Add New Service</Link> */}
     </div>
   );
 };
