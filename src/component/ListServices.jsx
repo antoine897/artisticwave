@@ -92,7 +92,7 @@ const ListServices = () => {
               <tr key={index}>
                 <td>{service.serviceName}</td>
                 <td>{service.serviceDescription}</td>
-                <td>{service.durationMinutes}</td>
+                <td>{service.serviceDuration}</td>
                 <td>{service.sessionPrice}</td>
                 <td>{service.studentNumber}</td>
                 <td>{(service.availableDays || []).map((day, i) => (

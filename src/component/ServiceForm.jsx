@@ -19,7 +19,7 @@ const ServiceForm = () => {
 
   const [serviceName, setServiceName] = useState('');
   const [serviceDescription, setServiceDescription] = useState('');
-  const [durationMinutes, setDurationMinutes] = useState(50);
+  const [serviceDuration, setServiceDuration] = useState(50);
   const [sessionPrice, setSessionPrice] = useState('');
   const [studentNumber, setStudentNumber] = useState(1);
   const [availableDays, setAvailableDays] = useState([]);
@@ -47,7 +47,7 @@ const ServiceForm = () => {
           setIsEditMode(true);
           setServiceName(serviceData.serviceName || '');
           setServiceDescription(serviceData.serviceDescription || '');
-          setDurationMinutes(serviceData.durationMinutes || 50);
+          setServiceDuration(serviceData.serviceDuration || 50);
           setSessionPrice(serviceData.sessionPrice || '');
           setStudentNumber(serviceData.studentNumber || 1)
           setAvailableDays(serviceData.availableDays || []);
@@ -77,7 +77,7 @@ const ServiceForm = () => {
   const serviceData = {
     serviceName,
     serviceDescription,
-    durationMinutes: Number(durationMinutes),
+    serviceDuration: Number(serviceDuration),
     sessionPrice: Number(sessionPrice),
     studentNumber: Number(studentNumber),
     availableDays,
@@ -139,8 +139,8 @@ const ServiceForm = () => {
               type="number"
               className="form-control"
               placeholder="Enter duration in minutes"
-              value={durationMinutes}
-              onChange={(e) => setDurationMinutes(e.target.value)}
+              value={serviceDuration}
+              onChange={(e) => setServiceDuration(e.target.value)}
               required
             />
           </div>

@@ -9,10 +9,11 @@ import getDay from 'date-fns/getDay';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
+import { COLLECTIONS } from '../constants/collectionConst';
 import "../css/style.css";
 
 import RightSidebar from './RightSidbar';
-import AppointmentModal from './AppointmentModal'; // ✅ Import the new modal
+import AppointmentModal from './AppointmentModal';
 import fetchDocuments from '../methods/fetchDocuments';
 import deleteDocument from '../methods/deleteDocument';
 
@@ -28,11 +29,6 @@ const localizer = dateFnsLocalizer({
   locales,
 });
 
-export const COLLECTIONS = {
-  SERVICES: 'services',
-  APPOINTMENTS: 'appointments',
-};
-
 const Schedule = () => {
   const navigate = useNavigate();
   const auth = getAuth();
@@ -42,7 +38,6 @@ const Schedule = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
 
-  // Handle login check
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user) {
@@ -55,19 +50,20 @@ const Schedule = () => {
     return () => unsubscribe();
   }, [auth, navigate]);
 
-  // Fetch appointments
   useEffect(() => {
     if (!isAuthorized) return;
 
     const loadAppointments = async () => {
       try {
         const data = await fetchDocuments(COLLECTIONS.APPOINTMENTS);
+
         const sortedAppointments = data
           .map(app => ({
             ...app,
-            appointmentDateTime: new Date(`${app.date}T${app.time}`),
+            dateFrom: new Date(app.dateFrom),
+            dateTo: new Date(app.dateTo),
           }))
-          .sort((a, b) => a.appointmentDateTime - b.appointmentDateTime);
+          .sort((a, b) => a.dateFrom - b.dateFrom);
 
         setAppointments(sortedAppointments);
         setIsLoading(false);
@@ -80,7 +76,6 @@ const Schedule = () => {
     loadAppointments();
   }, [isAuthorized]);
 
-  // Handle appointment actions
   const handleEditClick = (id) => {
     navigate(`/appointment/${id}`);
   };
@@ -105,28 +100,35 @@ const Schedule = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
-  // Transform appointments to calendar events
-  const events = appointments.map(app => {
-    const start = new Date(`${app.date}T${app.time}`);
-    const end = new Date(start.getTime() + 30 * 60 * 1000); // 30 mins slot
-
-    return {
-      id: app.id,
-      title: `${app.FirstName} ${app.LastName} (${app.type})`,
-      start,
-      end,
-      allDay: false,
-      resource: app,
-    };
-  });
+  const events = appointments.map(app => ({
+    id: app.id,
+    title: `${app.client?.firstName || 'NoName'} ${app.client?.lastName || ''} (${app.service?.serviceName || 'Service'})`,
+    start: app.dateFrom,
+    end: app.dateTo,
+    allDay: false,
+    resource: {
+      status: app.status,
+      paid: app.paid,
+    }
+  }));
 
   if (isLoading) return <div className="full-page">Loading...</div>;
   if (!isAuthorized) return null;
 
   return (
     <div className="full-page">
-      <div className="top-bar">
-        <h2 className="page-title">Appointments Calendar</h2>
+      <div className="top-bar d-flex justify-content-between align-items-center">
+        <div className="d-flex align-items-center gap-3">
+          <h2 className="page-title mb-0">Appointments Calendar</h2>
+          <button
+            className="btn btn-success"
+            onClick={() => navigate('/appointments/add')}
+            title="Add Appointment"
+          >
+            <i className="bi bi-plus-lg"></i> Add
+          </button>
+        </div>
+
         {!isSidebarOpen && (
           <button className="btn btn-outline-primary" onClick={toggleSidebar}>
             ☰ Menu
@@ -152,14 +154,32 @@ const Schedule = () => {
           endAccessor="end"
           style={{ height: 600 }}
           views={['month', 'week', 'day']}
-          onSelectEvent={(event) => setSelectedAppointment(event.resource)}
+          onSelectEvent={(event) => setSelectedAppointment(appointments.find(a => a.id === event.id))}
           tooltipAccessor={(event) =>
             `${event.title}\nDate: ${format(event.start, 'PPP')}\nTime: ${format(event.start, 'p')}`
           }
+          eventPropGetter={(event) => {
+            const { status, paid } = event.resource;
+
+            let backgroundColor = '#6c757d'; // default
+            if (status === 'new') backgroundColor = '#0d6efd'; // blue
+            else if (status === 'closed') backgroundColor = '#6c757d'; // gray
+
+            const border = paid ? '' : '4px dashed #dc3545'; // green or red
+
+            return {
+              style: {
+                backgroundColor,
+                color: 'white',
+                border,
+                borderRadius: '6px',
+                fontWeight: '500',
+              },
+            };
+          }}
         />
       </div>
 
-      {/* Appointment Modal */}
       <AppointmentModal
         appointment={selectedAppointment}
         onClose={() => setSelectedAppointment(null)}
