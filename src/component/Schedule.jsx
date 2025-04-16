@@ -1,11 +1,32 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import "../css/style.css";
+import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
+import format from 'date-fns/format';
+import parse from 'date-fns/parse';
+import startOfWeek from 'date-fns/startOfWeek';
+import getDay from 'date-fns/getDay';
+import 'react-big-calendar/lib/css/react-big-calendar.css';
+import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
+import "../css/style.css";
+
 import RightSidebar from './RightSidbar';
+import AppointmentModal from './AppointmentModal'; // ✅ Import the new modal
 import fetchDocuments from '../methods/fetchDocuments';
 import deleteDocument from '../methods/deleteDocument';
+
+const locales = {
+  'en-US': require('date-fns/locale/en-US'),
+};
+
+const localizer = dateFnsLocalizer({
+  format,
+  parse,
+  startOfWeek,
+  getDay,
+  locales,
+});
 
 export const COLLECTIONS = {
   SERVICES: 'services',
@@ -19,10 +40,9 @@ const Schedule = () => {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [appointments, setAppointments] = useState([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1); // Track the current page
-  const [appointmentsPerPage] = useState(5); // Number of appointments per page
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
 
-  // Handle user login
+  // Handle login check
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user) {
@@ -35,21 +55,19 @@ const Schedule = () => {
     return () => unsubscribe();
   }, [auth, navigate]);
 
-  // Load appointments
+  // Fetch appointments
   useEffect(() => {
     if (!isAuthorized) return;
 
     const loadAppointments = async () => {
       try {
         const data = await fetchDocuments(COLLECTIONS.APPOINTMENTS);
-
-        // Ensure that each appointment has valid date and time
         const sortedAppointments = data
           .map(app => ({
             ...app,
-            appointmentDateTime: new Date(`${app.date}T${app.time}`), // Create a Date object from date and time
+            appointmentDateTime: new Date(`${app.date}T${app.time}`),
           }))
-          .sort((a, b) => a.appointmentDateTime - b.appointmentDateTime); // Sort by date and time
+          .sort((a, b) => a.appointmentDateTime - b.appointmentDateTime);
 
         setAppointments(sortedAppointments);
         setIsLoading(false);
@@ -62,16 +80,19 @@ const Schedule = () => {
     loadAppointments();
   }, [isAuthorized]);
 
-  // Edit & Delete
+  // Handle appointment actions
   const handleEditClick = (id) => {
     navigate(`/appointment/${id}`);
   };
 
-  const handleDeleteClick = async (id) => {
+  const handleDeleteClick = async () => {
+    if (!selectedAppointment) return;
+
     if (window.confirm("Are you sure you want to delete this appointment?")) {
       try {
-        await deleteDocument(COLLECTIONS.APPOINTMENTS, id);
-        setAppointments(appointments.filter(app => app.id !== id));
+        await deleteDocument(COLLECTIONS.APPOINTMENTS, selectedAppointment.id);
+        setAppointments(prev => prev.filter(app => app.id !== selectedAppointment.id));
+        setSelectedAppointment(null);
         alert("Appointment deleted successfully.");
       } catch (error) {
         console.error("Error deleting appointment:", error);
@@ -84,21 +105,20 @@ const Schedule = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
-  const indexOfLastAppointment = currentPage * appointmentsPerPage; // Get the last appointment index
-  const indexOfFirstAppointment = indexOfLastAppointment - appointmentsPerPage; // Get the first appointment index
-  const currentAppointments = appointments.slice(indexOfFirstAppointment, indexOfLastAppointment); // Slice the appointments for current page
+  // Transform appointments to calendar events
+  const events = appointments.map(app => {
+    const start = new Date(`${app.date}T${app.time}`);
+    const end = new Date(start.getTime() + 30 * 60 * 1000); // 30 mins slot
 
-  const handleNextPage = () => {
-    if (currentPage * appointmentsPerPage < appointments.length) {
-      setCurrentPage(currentPage + 1);
-    }
-  };
-
-  const handlePrevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
-  };
+    return {
+      id: app.id,
+      title: `${app.FirstName} ${app.LastName} (${app.type})`,
+      start,
+      end,
+      allDay: false,
+      resource: app,
+    };
+  });
 
   if (isLoading) return <div className="full-page">Loading...</div>;
   if (!isAuthorized) return null;
@@ -106,7 +126,7 @@ const Schedule = () => {
   return (
     <div className="full-page">
       <div className="top-bar">
-        <h2 className="page-title">All Appointments</h2>
+        <h2 className="page-title">Appointments Calendar</h2>
         {!isSidebarOpen && (
           <button className="btn btn-outline-primary" onClick={toggleSidebar}>
             ☰ Menu
@@ -117,87 +137,35 @@ const Schedule = () => {
       <RightSidebar onClose={toggleSidebar} isOpen={isSidebarOpen} />
 
       <div
-        className="table-wrapper"
+        className="calendar-wrapper"
         style={{
           marginRight: isSidebarOpen ? "200px" : "0",
           width: isSidebarOpen ? "calc(100% - 230px)" : "100%",
           transition: "all 0.3s ease-in-out",
+          padding: '20px'
         }}
       >
-        <table className="table table-striped table-hover align-middle">
-          <thead className="table-dark">
-            <tr>
-              <th>First Name</th>
-              <th>Last Name</th>
-              <th>Phone Number</th>
-              <th>Relative First Name</th>
-              <th>Relative Phone Number</th>
-              <th>Date</th>
-              <th>Time</th>
-              <th>Type</th>
-              <th>Status</th>
-              <th>Amount</th>
-              <th style={{ width: '150px' }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {currentAppointments.map((app, index) => (
-              <tr key={index}>
-                <td>{app.FirstName}</td>
-                <td>{app.LastName}</td>
-                <td>{app.PhoneNumber}</td>
-                <td>{app.relativeName}</td>
-                <td>{app.relativePhoneNumber}</td>
-                <td>{app.date}</td>
-                <td>{app.time}</td>
-                <td>{app.type}</td>
-                <td className={app.status === "paid" ? "text-success" : "text-danger"}>
-                  {app.status}
-                </td>
-                <td>${app.amount}</td>
-                <td>
-                  <div style={{ display: 'flex', gap: '10px' }}>
-                    <button
-                      className="btn btn-warning btn-sm"
-                      onClick={() => handleEditClick(app.id)}
-                    >
-                      <i className="bi bi-pencil"></i>
-                    </button>
-                    <button
-                      className="btn btn-danger btn-sm"
-                      onClick={() => handleDeleteClick(app.id)}
-                    >
-                      <i className="bi bi-trash"></i>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        <div className="pagination-container">
-  <button
-    onClick={handlePrevPage}
-    disabled={currentPage === 1}
-    className="btn btn-secondary"
-  >
-    Prev
-  </button>
-  
-  <span className="page-number">{`Page ${currentPage}`}</span>
-
-  <button
-    onClick={handleNextPage}
-    disabled={currentPage * appointmentsPerPage >= appointments.length}
-    className="btn btn-secondary"
-  >
-    Next
-  </button>
-</div>
-
-
+        <Calendar
+          localizer={localizer}
+          events={events}
+          startAccessor="start"
+          endAccessor="end"
+          style={{ height: 600 }}
+          views={['month', 'week', 'day']}
+          onSelectEvent={(event) => setSelectedAppointment(event.resource)}
+          tooltipAccessor={(event) =>
+            `${event.title}\nDate: ${format(event.start, 'PPP')}\nTime: ${format(event.start, 'p')}`
+          }
+        />
       </div>
+
+      {/* Appointment Modal */}
+      <AppointmentModal
+        appointment={selectedAppointment}
+        onClose={() => setSelectedAppointment(null)}
+        onEdit={handleEditClick}
+        onDelete={handleDeleteClick}
+      />
     </div>
   );
 };
