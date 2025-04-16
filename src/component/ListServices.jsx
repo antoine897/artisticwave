@@ -3,8 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { COLLECTIONS } from '../constants/collectionConst';
 import "../css/style.css";
-import 'react-time-picker/dist/TimePicker.css';
-import 'bootstrap-icons/font/bootstrap-icons.css';  
+import 'bootstrap-icons/font/bootstrap-icons.css';
 
 import fetchDocuments from '../methods/fetchDocuments';
 import deleteDocument from '../methods/deleteDocument';
@@ -74,15 +73,17 @@ const ListServices = () => {
         <h2 className="mb-0">All Services</h2>
         <button className="btn btn-outline-primary fw-bold fs-5" onClick={() => navigate('/schedule')}>← Back</button>
       </div>
+
       <div className="table-responsive">
         <table className="table table-striped table-hover align-middle">
           <thead className="table-dark">
             <tr>
               <th>Service Name</th>
-              <th>Service Unit</th>
-              <th>Service Unit Price</th>
-              <th>Service Description</th>
-              <th>Created</th>
+              <th>Description</th>
+              <th>Duration (min)</th>
+              <th>Session Price ($)</th>
+              <th>Max Students</th>
+              <th>Available Days</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -90,10 +91,14 @@ const ListServices = () => {
             {services.map((service, index) => (
               <tr key={index}>
                 <td>{service.serviceName}</td>
-                <td>{service.serviceUnit} h</td>
-                <td>{service.serviceUnitPrice} $</td>
                 <td>{service.serviceDescription}</td>
-                <td>{new Date(service.createdDate).toLocaleString()}</td>
+                <td>{service.durationMinutes}</td>
+                <td>{service.sessionPrice}</td>
+                <td>{service.studentNumber}</td>
+                <td>{(service.availableDays || []).map((day, i) => (
+                    <span key={i} className="badge bg-secondary me-1">{day.slice(0, 3)}</span>
+                  ))}
+                </td>
                 <td>
                   <button
                     className="btn btn-warning btn-sm"
