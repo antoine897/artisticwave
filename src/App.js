@@ -22,18 +22,22 @@ function App() {
             <Routes>
               <Route path="/" element={<Login />} />
               <Route path="/schedule" element={<Schedule />} />
+              <Route path="/Appointments/:id" element={<AppointmentForm />} />
+              <Route path="/Appointments/add" element={<AppointmentForm />} />
               <Route path="/clients" element={<ListClients />} />
               <Route path="/client/:id" element={<ClientForm />} />
               <Route path="/clients/add" element={<ClientForm />} /> 
               <Route path="/services" element={<ListServices />} />
               <Route path="/service/:id" element={<ServiceForm />} />
               <Route path="/services/add" element={<ServiceForm />} /> 
+
+              
               
               
               <Route path="/updateuserForm/:userId" element={<UpdateUserForm />} />
               <Route path="/UnpaidClients" element={<UnpaidClients />} />
               <Route path="/viewReports" element={<ViewReports />} />
-              <Route path="/Appointments/Add" element={<AppointmentForm />} />
+              
             </Routes>
         </Router>
     </AuthProvider>

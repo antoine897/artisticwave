@@ -71,7 +71,7 @@ const ListClients = () => {
   return (
     <div className="container py-5">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2 className="mb-0">All Clients</h2>
+        <h2 className="mb-0">All Students</h2>
         <button className="btn btn-outline-primary fw-bold fs-5" onClick={() => navigate('/schedule')}>← Back</button>
       </div>
       <div className="table-responsive">
@@ -117,8 +117,7 @@ const ListClients = () => {
           </tbody>
         </table>
       </div>
-
-      
+      <Link to="../clients/add" className="btn btn-primary mt-3">Add New Student</Link>      
     </div>
   );
 };

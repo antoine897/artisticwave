@@ -79,7 +79,7 @@ const RightSidebar = ({ onClose, isOpen }) => {
         <div className={`collapse ${isAppointmentsMenuOpen ? "show" : ""}`}>
           <ul className="list-unstyled text-start ps-3 mt-2">
             <li>
-              <Link to="/appointments/Add" className="text-decoration-none" onClick={onClose}>Add Appointment</Link>
+              <Link to="/appointments/add" className="text-decoration-none" onClick={onClose}>Add Appointment</Link>
             </li>
           </ul>
         </div>

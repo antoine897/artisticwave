@@ -22,11 +22,6 @@ const ClientForm = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [relativeName, setRelativeName] = useState('');
   const [relativePhoneNumber, setRelativePhoneNumber] = useState('');
-  const [phoneNumberError, setPhoneNumberError] = useState('');
-  const [relativePhoneNumberError, setRelativePhoneNumberError] = useState('');
-
-  // Regex pattern for validating the phone number
-  const phoneNumberPattern = /^(06|03|78|70|71|80|81)\d{6}$/;
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -66,21 +61,6 @@ const ClientForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validate phone numbers
-    if (!phoneNumberPattern.test(phoneNumber)) {
-      setPhoneNumberError('Phone number must be 8 digits and start with 06, 03, 78, 70, 71, 80, or 81.');
-      return;
-    }
-
-    if (relativePhoneNumber && !phoneNumberPattern.test(relativePhoneNumber)) {
-      setRelativePhoneNumberError('Relative phone number must be 8 digits and start with 06, 03, 78, 70, 71, 80, or 81.');
-      return;
-    }
-
-    // Clear any previous errors
-    setPhoneNumberError('');
-    setRelativePhoneNumberError('');
-
     const clientData = {
       firstName,
       lastName,
@@ -110,18 +90,18 @@ const ClientForm = () => {
   return (
     <div className="container py-5">
       <div className="w-50 mx-auto">
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <h2 className="mb-3 mt-5">{isEditMode ? 'Update Client' : 'Add New Client'}</h2>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+          <h2 className="mb-3 mt-5">{isEditMode ? 'Update Student' : 'Add New Student'}</h2>
           <button className="btn btn-outline-primary fw-bold fs-5" onClick={() => navigate('/clients')}>← Back</button>
         </div>
         <form onSubmit={handleSubmit}>
-          {/* Form Fields */}
           <div className="mb-3">
             <label htmlFor="FirstName" className="form-label">First Name</label>
             <input
               type="text"
               className="form-control"
               placeholder="Enter first name"
+              name="FirstName"
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
               required
@@ -133,6 +113,7 @@ const ClientForm = () => {
             <input
               className="form-control"
               placeholder="Enter last name"
+              name="LastName"
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
               required
@@ -145,19 +126,29 @@ const ClientForm = () => {
               type="tel"
               className="form-control"
               placeholder="Enter phone number"
+              name="PhoneNumber"
               value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
+              pattern="(03|06|70|71|76|78|80|81)[0-9]{6}"
+              onChange={(e) => {
+                setPhoneNumber(e.target.value);
+                e.target.setCustomValidity("");
+              }}
+              onInvalid={(e) => {
+                if (!e.target.validity.valid) {
+                  e.target.setCustomValidity("Phone must start with a valid prefix 03/06/70... and be exactly 8 digits.");
+                }
+              }}
               required
             />
-            {phoneNumberError && <div className="text-danger">{phoneNumberError}</div>}
           </div>
 
           <div className="mb-3">
-            <label htmlFor="Family" className="form-label">Relative Name</label>
+            <label htmlFor="Family" className="form-label">A relative name</label>
             <input
               type="text"
               className="form-control"
-              placeholder="Enter relative name"
+              placeholder="Enter a relative Name"
+              name="RelativeName"
               value={relativeName}
               onChange={(e) => setRelativeName(e.target.value)}
             />
@@ -168,16 +159,23 @@ const ClientForm = () => {
             <input
               type="tel"
               className="form-control"
-              placeholder="Enter relative phone number"
+              placeholder="Enter the relative phone number"
+              name="RelativePhoneNumber"
+              pattern="(03|06|70|71|76|78|80|81)[0-9]{6}"
               value={relativePhoneNumber}
-              onChange={(e) => setRelativePhoneNumber(e.target.value)}
+              onChange={(e) => {
+                setRelativePhoneNumber(e.target.value);
+                e.target.setCustomValidity(""); 
+              }}
+              onInvalid={(e) => {
+                if (!e.target.validity.valid) {
+                  e.target.setCustomValidity("Phone must start with a valid prefix 03/06/70... and be exactly 8 digits.");
+                }
+              }}
             />
-            {relativePhoneNumberError && <div className="text-danger">{relativePhoneNumberError}</div>}
           </div>
 
-          <button type="submit" className="btn btn-primary">
-            {isEditMode ? 'Update Client' : 'Add'}
-          </button>
+          <button type="submit" className="btn btn-primary">Add</button>
         </form>
       </div>
     </div>

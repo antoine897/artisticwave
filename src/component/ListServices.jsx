@@ -114,7 +114,7 @@ const ListServices = () => {
         </table>
       </div>
 
-      {/* <Link to="../services/add" className="btn btn-primary mt-3">Add New Service</Link> */}
+      <Link to="../services/add" className="btn btn-primary mt-3">Add New Service</Link>
     </div>
   );
 };
