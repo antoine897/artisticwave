@@ -10,6 +10,8 @@ import ClientForm from "./component/ClientForm";
 import ListServices from "./component/ListServices";
 import ServiceForm from './component/ServiceForm';
 
+import FinancialRecap from './component/FinancialRecap';
+
 import UnpaidClients from "./component/UnpaidClients";
 import ViewReports from "./component/ViewReports";
 import AppointmentForm from './component/AppointmentForm';
@@ -33,7 +35,7 @@ function App() {
               <Route path="/services" element={<ListServices />} />
               <Route path="/service/:id" element={<ServiceForm />} />
               <Route path="/services/add" element={<ServiceForm />} /> 
-
+              <Route path="/financialRecap" element={<FinancialRecap />} /> 
               
               <Route path="/UnpaidClients" element={<UnpaidClients />} />
               <Route path="/viewReports" element={<ViewReports />} />

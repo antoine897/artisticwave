@@ -8,6 +8,7 @@ const RightSidebar = ({ onClose, isOpen }) => {
   const [isClientsMenuOpen, setIsClientsMenuOpen] = useState(false);
   const [isServicesMenuOpen, setIsServicesMenuOpen] = useState(false);
   const [isAppointmentsMenuOpen, setIsAppointmentsMenuOpen] = useState(false);
+  const [isFinancialsMenuOpen, setIsFinancialsMenuOpen] = useState(false);
 
   const handleSignOut = () => {
     SignOut()
@@ -80,6 +81,23 @@ const RightSidebar = ({ onClose, isOpen }) => {
           <ul className="list-unstyled text-start ps-3 mt-2">
             <li>
               <Link to="/appointments/add" className="text-decoration-none" onClick={onClose}>Add Appointment</Link>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div className="p-3">
+        <div
+          className="fw-bold text-start"
+          style={{ cursor: "pointer" }}
+          onClick={() => setIsFinancialsMenuOpen(!isFinancialsMenuOpen)}
+        >
+          Financials
+        </div>
+        <div className={`collapse ${isFinancialsMenuOpen ? "show" : ""}`}>
+          <ul className="list-unstyled text-start ps-3 mt-2">
+            <li>
+              <Link to="/financialRecap" className="text-decoration-none" onClick={onClose}>Financial Recap</Link>
             </li>
           </ul>
         </div>

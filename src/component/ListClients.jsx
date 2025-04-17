@@ -81,7 +81,7 @@ const ListClients = () => {
               <th>First Name</th>
               <th>Last Name</th>
               <th>Phone Number</th>
-              {/* <th>Client Type</th> */}
+              <th>Mail Address</th>
               <th>Relative Name</th>
               <th>Relative Phone</th>
               <th>Created</th>
@@ -94,7 +94,7 @@ const ListClients = () => {
                 <td>{client.firstName}</td>
                 <td>{client.lastName}</td>
                 <td>{client.phoneNumber}</td>
-                {/* <td>{client.clientType}</td> */}
+                <td>{client.mailAddress || "-"}</td>
                 <td>{client.relativeName || "-"}</td>
                 <td>{client.relativePhoneNumber || "-"}</td>
                 <td>{new Date(client.createdDate).toLocaleString()}</td>

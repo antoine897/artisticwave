@@ -35,7 +35,7 @@ const UnpaidClients = () => {
         const unpaid = res.data.filter((user) => user.Status !== "Paid");
         setUsers(unpaid);
       } catch (err) {
-        console.log(err);
+        console.error(err);
       }
     };
     fetchAllUser();

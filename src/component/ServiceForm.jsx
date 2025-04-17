@@ -106,7 +106,7 @@ const ServiceForm = () => {
       <div className="w-50 mx-auto">
         <div className="d-flex justify-content-between align-items-center mb-4">
           <h2 className="mb-3 mt-5">{isEditMode ? 'Update Service' : 'Add New Service'}</h2>
-          <button className="btn btn-outline-primary fw-bold fs-5" onClick={() => navigate('/services')}>← Back</button>
+          <button className="btn btn-outline-primary fw-bold fs-5" onClick={() => navigate(-1)}>← Back</button>
         </div>
         <form onSubmit={handleSubmit}>
           <div className="mb-3">

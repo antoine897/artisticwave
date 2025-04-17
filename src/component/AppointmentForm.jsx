@@ -131,6 +131,7 @@ const AppointmentForm = () => {
         firstName: c.firstName,
         lastName: c.lastName,
         phoneNumber: c.phoneNumber,
+        mailAddress: c.mailAddress,
         relativeName: c.relativeName || "",
         relativePhoneNumber: c.relativePhoneNumber || "",
         paid: c.paid || false,
@@ -254,6 +255,7 @@ const AppointmentForm = () => {
                 <div key={client.id} className="border rounded p-2 mb-2">
                   <p><strong>Name:</strong> {client.firstName} {client.lastName}</p>
                   <p><strong>Phone:</strong> {client.phoneNumber}</p>
+                  <p><strong>Mail:</strong> {client.mailAddress}</p>
                   {client.relativeName && <p><strong>Relative Name:</strong> {client.relativeName}</p>}
                   {client.relativePhoneNumber && <p><strong>Relative Phone:</strong> {client.relativePhoneNumber}</p>}
                   <div className="form-check">

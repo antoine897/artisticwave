@@ -13,8 +13,6 @@ const deleteDocument = async (collectionName, documentId) => {
 
     // Delete the document
     await deleteDoc(documentRef);
-
-    console.log(`Document with ID ${documentId} deleted successfully.`);
   } catch (e) {
     console.error('Error deleting document: ', e);
   }

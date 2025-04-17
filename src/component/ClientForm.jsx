@@ -20,6 +20,7 @@ const ClientForm = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [mailAddress, setMailAddress] = useState('');
   const [relativeName, setRelativeName] = useState('');
   const [relativePhoneNumber, setRelativePhoneNumber] = useState('');
 
@@ -65,6 +66,7 @@ const ClientForm = () => {
       firstName,
       lastName,
       phoneNumber,
+      mailAddress,
       relativeName,
       relativePhoneNumber,
       createdDate: new Date().toISOString(),
@@ -92,7 +94,7 @@ const ClientForm = () => {
       <div className="w-50 mx-auto">
       <div className="d-flex justify-content-between align-items-center mb-4">
           <h2 className="mb-3 mt-5">{isEditMode ? 'Update Student' : 'Add New Student'}</h2>
-          <button className="btn btn-outline-primary fw-bold fs-5" onClick={() => navigate('/clients')}>← Back</button>
+          <button className="btn btn-outline-primary fw-bold fs-5" onClick={() => navigate(-1)}>← Back</button>
         </div>
         <form onSubmit={handleSubmit}>
           <div className="mb-3">
@@ -143,6 +145,18 @@ const ClientForm = () => {
           </div>
 
           <div className="mb-3">
+            <label htmlFor="MailAddress" className="form-label">Mail Address</label>
+            <input
+              type="email"
+              className="form-control"
+              placeholder="Enter mail address"
+              name="MailAddress"
+              value={mailAddress}
+              onChange={(e) => setMailAddress(e.target.value)}
+            />
+          </div>
+
+          <div className="mb-3">
             <label htmlFor="Family" className="form-label">A relative name</label>
             <input
               type="text"
@@ -175,7 +189,9 @@ const ClientForm = () => {
             />
           </div>
 
-          <button type="submit" className="btn btn-primary">Add</button>
+          <button type="submit" className="btn btn-primary">
+            {isEditMode ? 'Update Student' : 'Add'}
+          </button>
         </form>
       </div>
     </div>
