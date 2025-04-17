@@ -6,7 +6,7 @@ import { COLLECTIONS } from '../constants/collectionConst';
 const AppointmentModal = ({ appointment, onClose, onEdit, onDelete }) => {
   if (!appointment) return null;
 
-  const { client, service, status, paid, dateFrom, dateTo } = appointment;
+  const { clients = [], service, status, dateFrom, dateTo } = appointment;
 
   const getStatusBadge = (status) => {
     switch (status) {
@@ -26,11 +26,17 @@ const AppointmentModal = ({ appointment, onClose, onEdit, onDelete }) => {
       alert("Error updating status.");
     }
   };
-  
-  const handlePaidUpdate = async (isPaid) => {
+
+  const handlePaidUpdate = async (index, isPaid) => {
     try {
-      await updateDocumentWithId(COLLECTIONS.APPOINTMENTS, { paid: isPaid }, appointment.id);
-      alert(isPaid ? "Marked as Paid" : "Marked as Unpaid");
+      const updatedClients = [...clients];
+      updatedClients[index].paid = isPaid;
+
+      await updateDocumentWithId(
+        COLLECTIONS.APPOINTMENTS,
+        { clients: updatedClients },
+        appointment.id
+      );
       onClose();
     } catch (error) {
       console.error("Failed to update payment:", error);
@@ -48,15 +54,48 @@ const AppointmentModal = ({ appointment, onClose, onEdit, onDelete }) => {
           </div>
 
           <div className="modal-body">
-            <p><strong>Name:</strong> {client?.firstName} {client?.lastName}</p>
-            <p><strong>Phone:</strong> {client?.phoneNumber}</p>
-            <p><strong>Relative:</strong> {client?.relativeName} ({client?.relativePhoneNumber})</p>
-
-            <hr />
+            <h6><strong>Clients:</strong></h6>
+            {clients.map((client, index) => (
+              <div key={index} className="mb-2">
+                <p className="mb-1">
+                  <strong>Name:</strong> {client.firstName} {client.lastName}
+                </p>
+                <p className="mb-1">
+                  <strong>Phone:</strong> {client.phoneNumber}
+                </p>
+                <p className="mb-2">
+                  <strong>Amount:</strong> {client.ammountToPay} $
+                  {client.paid ? (
+                    <span className="text-success"><i className="bi bi-check-circle-fill"></i> Yes</span>
+                  ) : (
+                    <span className="text-danger"><i className="bi bi-x-circle-fill"></i> No</span>
+                  )}
+                </p>
+                <div className="d-flex gap-2 mb-3">
+                  {!client.paid && (
+                    <button
+                      className="btn btn-sm btn-outline-success"
+                      onClick={() => handlePaidUpdate(index, true)}
+                    >
+                      <i className="bi bi-cash-coin"></i> Mark as Paid
+                    </button>
+                  )}
+                  {client.paid && (
+                    <button
+                      className="btn btn-sm btn-outline-danger"
+                      onClick={() => handlePaidUpdate(index, false)}
+                    >
+                      <i className="bi bi-cash-coin"></i> Mark as Unpaid
+                    </button>
+                  )}
+                </div>
+                <hr />
+              </div>
+            ))}
 
             <p><strong>Service:</strong> {service?.serviceName}</p>
             <p><strong>Description:</strong> {service?.serviceDescription}</p>
-            <p><strong>Price:</strong> ${service?.sessionPrice}</p>
+            <p><strong>Total Price:</strong> ${service?.sessionPrice ? service.sessionPrice * clients.length : 0}</p>
 
             <hr />
 
@@ -65,10 +104,6 @@ const AppointmentModal = ({ appointment, onClose, onEdit, onDelete }) => {
             <p><strong>To:</strong> {format(new Date(dateTo), 'p')}</p>
 
             <p><strong>Status:</strong> <span className={getStatusBadge(status)}>{status}</span></p>
-            <p><strong>Paid:</strong> {paid
-              ? <span className="text-success"><i className="bi bi-check-circle-fill"></i> Yes</span>
-              : <span className="text-danger"><i className="bi bi-x-circle-fill"></i> No</span>
-            }</p>
           </div>
 
           <div className="modal-footer d-flex justify-content-between flex-wrap gap-2">
@@ -85,16 +120,6 @@ const AppointmentModal = ({ appointment, onClose, onEdit, onDelete }) => {
               {status !== 'closed' && (
                 <button className="btn btn-outline-secondary" onClick={() => handleStatusUpdate('closed')}>
                   <i className="bi bi-archive"></i> Mark as Closed
-                </button>
-              )}
-              {!paid && (
-                <button className="btn btn-outline-success" onClick={() => handlePaidUpdate(true)}>
-                  <i className="bi bi-cash-coin"></i> Mark as Paid
-                </button>
-              )}
-              {paid && (
-                <button className="btn btn-outline-danger" onClick={() => handlePaidUpdate(false)}>
-                  <i className="bi bi-cash-coin"></i> Mark as Unpaid
                 </button>
               )}
             </div>

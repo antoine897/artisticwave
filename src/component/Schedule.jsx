@@ -77,7 +77,7 @@ const Schedule = () => {
   }, [isAuthorized]);
 
   const handleEditClick = (id) => {
-    navigate(`/appointment/${id}`);
+    navigate(`/appointments/${id}`);
   };
 
   const handleDeleteClick = async () => {
@@ -102,13 +102,15 @@ const Schedule = () => {
 
   const events = appointments.map(app => ({
     id: app.id,
-    title: `${app.client?.firstName || 'NoName'} ${app.client?.lastName || ''} (${app.service?.serviceName || 'Service'})`,
+    title: Array.isArray(app.clients) && app.clients.length > 1
+    ? `${app.service?.serviceName || 'Service'}`
+    : `${app.clients?.[0]?.firstName || 'NoName'} ${app.clients?.[0]?.lastName || ''} (${app.service?.serviceName || 'Service'})`,
     start: app.dateFrom,
     end: app.dateTo,
     allDay: false,
     resource: {
       status: app.status,
-      paid: app.paid,
+      paid: app.clients.every(client => client.paid)
     }
   }));
 

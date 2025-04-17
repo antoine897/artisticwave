@@ -24,10 +24,9 @@ const AppointmentForm = () => {
   const [clients, setClients] = useState([]);
   const [services, setServices] = useState([]);
 
-  const [selectedClient, setSelectedClient] = useState(null);
   const [selectedService, setSelectedService] = useState(null);
   const [date, setDate] = useState(null);
-  const [isPaid, setIsPaid] = useState(false);
+  const [selectedClients, setSelectedClients] = useState([]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -66,17 +65,21 @@ const AppointmentForm = () => {
         if (appointmentData) {
           setIsEditMode(true);
 
-          const client = clients.find(c => c.id === appointmentData.client?.id);
           const service = services.find(s => s.id === appointmentData.service?.id);
-
-          if (client) setSelectedClient(client);
           if (service) setSelectedService(service);
 
           if (appointmentData.dateFrom) {
             setDate(new Date(appointmentData.dateFrom));
           }
 
-          setIsPaid(appointmentData.paid || false);
+          if (appointmentData.clients?.length) {
+            const matchedClients = clients.filter(c => appointmentData.clients.find(ac => ac.id === c.id));
+            const clientsWithPaidStatus = matchedClients.map(c => {
+              const clientData = appointmentData.clients.find(ac => ac.id === c.id);
+              return { ...c, paid: clientData?.paid || false };
+            });
+            setSelectedClients(clientsWithPaidStatus);
+          }
         }
       } catch (error) {
         console.error("Error fetching appointment: ", error);
@@ -96,7 +99,16 @@ const AppointmentForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!selectedClient || !selectedService || !date) return;
+
+    if (!selectedService || !date || selectedClients.length === 0) {
+      alert("Please fill all fields.");
+      return;
+    }
+
+    if (selectedClients.length > selectedService.studentNumber) {
+      alert(`You can only select up to ${selectedService.studentNumber} clients.`);
+      return;
+    }
 
     const duration = selectedService.serviceDuration || 30;
     const startDate = date;
@@ -114,12 +126,20 @@ const AppointmentForm = () => {
     }
 
     const appointmentData = {
-      client: selectedClient,
+      clients: selectedClients.map(c => ({
+        id: c.id,
+        firstName: c.firstName,
+        lastName: c.lastName,
+        phoneNumber: c.phoneNumber,
+        relativeName: c.relativeName || "",
+        relativePhoneNumber: c.relativePhoneNumber || "",
+        paid: c.paid || false,
+        ammountToPay : selectedService.sessionPrice,
+      })),
       service: selectedService,
       dateFrom: startDate.toISOString(),
       dateTo: endDate.toISOString(),
       status: 'new',
-      paid: isPaid,
       createdDate: new Date().toISOString(),
     };
 
@@ -147,47 +167,8 @@ const AppointmentForm = () => {
           <h2 className="mb-3">{isEditMode ? 'Update Appointment' : 'Add New Appointment'}</h2>
           <button className="btn btn-outline-primary fw-bold fs-5" onClick={() => navigate('/schedule')}>← Back</button>
         </div>
+
         <form onSubmit={handleSubmit}>
-          {/* Client Select */}
-          <div className="mb-3">
-            <label htmlFor="clientSelect" className="form-label">Select Client</label>
-            <select
-              id="clientSelect"
-              className="form-select"
-              value={selectedClient?.id || ''}
-              onChange={(e) => {
-                const selected = clients.find(c => c.id === e.target.value);
-                setSelectedClient(selected);
-              }}
-              required
-            >
-              <option value="" disabled>-- Select a Client --</option>
-              {clients.map(client => (
-                <option key={client.id} value={client.id}>
-                  {client.firstName} {client.lastName} ({client.phoneNumber})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Client Info */}
-          {selectedClient && (
-            <div className="mb-3">
-              {(selectedClient.firstName || selectedClient.lastName) && (
-                <p><strong>Name:</strong> {selectedClient.firstName} {selectedClient.lastName}</p>
-              )}
-              {selectedClient.phoneNumber && (
-                <p><strong>Phone:</strong> {selectedClient.phoneNumber}</p>
-              )}
-              {selectedClient.relativeName && (
-                <p><strong>Relative Name:</strong> {selectedClient.relativeName}</p>
-              )}
-              {selectedClient.relativePhoneNumber && (
-                <p><strong>Relative Phone:</strong> {selectedClient.relativePhoneNumber}</p>
-              )}
-            </div>
-          )}
-
           {/* Service Select */}
           <div className="mb-3">
             <label htmlFor="serviceSelect" className="form-label">Select Service</label>
@@ -198,6 +179,8 @@ const AppointmentForm = () => {
               onChange={(e) => {
                 const selected = services.find(s => s.id === e.target.value);
                 setSelectedService(selected);
+                setDate(null);
+                setSelectedClients([]);
               }}
               required
             >
@@ -216,7 +199,10 @@ const AppointmentForm = () => {
               <label className="form-label">Select Date</label>
               <DatePicker
                 selected={date}
-                onChange={(date) => setDate(date)}
+                onChange={(date) => {
+                  setDate(date);
+                  setSelectedClients([]);
+                }}
                 filterDate={isDayAvailable}
                 showTimeSelect
                 timeIntervals={15}
@@ -226,18 +212,72 @@ const AppointmentForm = () => {
             </div>
           )}
 
-          {/* Paid Checkbox */}
-          <div className="form-check mb-3">
-            <input
-              type="checkbox"
-              className="form-check-input"
-              id="isPaid"
-              checked={isPaid}
-              onChange={(e) => setIsPaid(e.target.checked)}
-            />
-            <label className="form-check-label" htmlFor="isPaid">Paid</label>
-          </div>
+          {/* Client Multi-Select */}
+          {selectedService && date && (
+            <div className="mb-3">
+              <label htmlFor="clientSelect" className="form-label">
+                Select Clients ({selectedClients.length}/{selectedService.studentNumber})
+              </label>
+              <select
+                id="clientSelect"
+                className="form-select"
+                multiple
+                value={selectedClients.map(c => c.id)}
+                onChange={(e) => {
+                  const selectedIds = Array.from(e.target.selectedOptions, opt => opt.value);
+                  const selected = clients
+                    .filter(c => selectedIds.includes(c.id))
+                    .map(c => {
+                      const existing = selectedClients.find(sc => sc.id === c.id);
+                      return existing || { ...c, paid: false };
+                    });
+                  setSelectedClients(selected);
+                }}
+              >
+                {clients.map(client => (
+                  <option key={client.id} value={client.id}>
+                    {client.firstName} {client.lastName} ({client.phoneNumber})
+                  </option>
+                ))}
+              </select>
+              <small className="text-muted">
+                You can select up to {selectedService.studentNumber} clients.
+              </small>
+            </div>
+          )}
 
+          {/* Per-Client Info & Paid Checkbox */}
+          {selectedClients.length > 0 && (
+            <div className="mb-3">
+              <h5>Client Details:</h5>
+              {selectedClients.map((client, index) => (
+                <div key={client.id} className="border rounded p-2 mb-2">
+                  <p><strong>Name:</strong> {client.firstName} {client.lastName}</p>
+                  <p><strong>Phone:</strong> {client.phoneNumber}</p>
+                  {client.relativeName && <p><strong>Relative Name:</strong> {client.relativeName}</p>}
+                  {client.relativePhoneNumber && <p><strong>Relative Phone:</strong> {client.relativePhoneNumber}</p>}
+                  <div className="form-check">
+                    <input
+                      type="checkbox"
+                      className="form-check-input"
+                      id={`paid-${client.id}`}
+                      checked={client.paid}
+                      onChange={(e) => {
+                        const updatedClients = [...selectedClients];
+                        updatedClients[index].paid = e.target.checked;
+                        setSelectedClients(updatedClients);
+                      }}
+                    />
+                    <label className="form-check-label" htmlFor={`paid-${client.id}`}>
+                      Paid
+                    </label>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Submit Button */}
           <div>
             <button type="submit" className="btn btn-primary">
               {isEditMode ? 'Update Appointment' : 'Add Appointment'}
