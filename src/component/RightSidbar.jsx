@@ -1,23 +1,18 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { SignOut } from '../methods/SignOut';
-import { useNavigate } from 'react-router-dom';
 
 const RightSidebar = ({ onClose, isOpen }) => {
   const navigate = useNavigate();
   const [isClientsMenuOpen, setIsClientsMenuOpen] = useState(false);
   const [isServicesMenuOpen, setIsServicesMenuOpen] = useState(false);
   const [isAppointmentsMenuOpen, setIsAppointmentsMenuOpen] = useState(false);
-  const [isFinancialsMenuOpen, setIsFinancialsMenuOpen] = useState(false);
+  const [isFinancialMenuOpen, setIsFinancialMenuOpen] = useState(false); // ✅ Financial menu state
 
   const handleSignOut = () => {
     SignOut()
-      .then(() => {
-        navigate('/');
-      })
-      .catch((error) => {
-        console.error('Sign out failed:', error.message);
-      });
+      .then(() => navigate('/'))
+      .catch((error) => console.error('Sign out failed:', error.message));
   };
 
   return (
@@ -26,6 +21,7 @@ const RightSidebar = ({ onClose, isOpen }) => {
         <h5 className="mb-0 text-primary menu-hover" onClick={onClose}>Menu</h5>
       </div>
 
+      {/* Clients */}
       <div className="p-3">
         <div
           className="fw-bold text-start"
@@ -36,19 +32,14 @@ const RightSidebar = ({ onClose, isOpen }) => {
         </div>
         <div className={`collapse ${isClientsMenuOpen ? "show" : ""}`}>
           <ul className="list-unstyled text-start ps-3 mt-2">
-            <li>
-              <Link to="/clients" className="text-decoration-none" onClick={onClose}>All clients</Link>
-            </li>
-            <li>
-              <Link to="/clients/add" className="text-decoration-none" onClick={onClose}>Add New Client</Link>
-            </li>
-            <li>
-              <Link to="/UnpaidClients" className="text-decoration-none" onClick={onClose}>Unpaid Clients</Link>
-            </li>
+            <li><Link to="/clients" onClick={onClose}>All Clients</Link></li>
+            <li><Link to="/clients/add" onClick={onClose}>Add New Client</Link></li>
+            <li><Link to="/UnpaidClients" onClick={onClose}>Unpaid Clients</Link></li>
           </ul>
         </div>
       </div>
 
+      {/* Services */}
       <div className="p-3">
         <div
           className="fw-bold text-start"
@@ -59,16 +50,13 @@ const RightSidebar = ({ onClose, isOpen }) => {
         </div>
         <div className={`collapse ${isServicesMenuOpen ? "show" : ""}`}>
           <ul className="list-unstyled text-start ps-3 mt-2">
-            <li>
-              <Link to="/services" className="text-decoration-none" onClick={onClose}>All Services</Link>
-            </li>
-            <li>
-              <Link to="/services/Add" className="text-decoration-none" onClick={onClose}>Add Service</Link>
-            </li>
+            <li><Link to="/services" onClick={onClose}>All Services</Link></li>
+            <li><Link to="/services/add" onClick={onClose}>Add Service</Link></li>
           </ul>
         </div>
       </div>
 
+      {/* Appointments */}
       <div className="p-3">
         <div
           className="fw-bold text-start"
@@ -79,39 +67,43 @@ const RightSidebar = ({ onClose, isOpen }) => {
         </div>
         <div className={`collapse ${isAppointmentsMenuOpen ? "show" : ""}`}>
           <ul className="list-unstyled text-start ps-3 mt-2">
-            <li>
-              <Link to="/appointments/add" className="text-decoration-none" onClick={onClose}>Add Appointment</Link>
-            </li>
+            <li><Link to="/appointments/add" onClick={onClose}>Add Appointment</Link></li>
           </ul>
         </div>
       </div>
 
+      {/* ✅ Financial */}
       <div className="p-3">
         <div
           className="fw-bold text-start"
           style={{ cursor: "pointer" }}
-          onClick={() => setIsFinancialsMenuOpen(!isFinancialsMenuOpen)}
+          onClick={() => setIsFinancialMenuOpen(!isFinancialMenuOpen)}
         >
-          Financials
+          Financial
         </div>
-        <div className={`collapse ${isFinancialsMenuOpen ? "show" : ""}`}>
+        <div className={`collapse ${isFinancialMenuOpen ? "show" : ""}`}>
           <ul className="list-unstyled text-start ps-3 mt-2">
-            <li>
-              <Link to="/financialRecap" className="text-decoration-none" onClick={onClose}>Financial Recap</Link>
-            </li>
+            <li><Link to="/ViewReports" onClick={onClose}>View Report</Link></li>
           </ul>
         </div>
       </div>
 
+      {/* Sign Out */}
       <div className="p-3">
-        <div
-          className="fw-bold text-start"
-          style={{ cursor: "pointer" }}
-          onClick={handleSignOut}
-        >
-          Sign Out
-        </div>
-      </div>
+  <div
+    className="fw-bold text-start"
+    style={{ cursor: "pointer" }}
+    onClick={() => {
+      const confirmLogout = window.confirm("Are you sure you want to log out?");
+      if (confirmLogout) {
+        handleSignOut();
+      }
+    }}
+  >
+    Sign Out
+  </div>
+</div>
+
     </div>
   );
 };

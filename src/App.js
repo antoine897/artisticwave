@@ -38,7 +38,7 @@ function App() {
               <Route path="/financialRecap" element={<FinancialRecap />} /> 
               
               <Route path="/UnpaidClients" element={<UnpaidClients />} />
-              <Route path="/viewReports" element={<ViewReports />} />
+              {/* <Route path="/viewReports" element={<ViewReports />} /> */}
               <Route path="*" element={<NotFound />} />
             </Routes>
         </Router>
