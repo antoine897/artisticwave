@@ -1,6 +1,10 @@
 import React from 'react';
 import { format } from 'date-fns';
 import updateDocumentWithId from '../methods/updateDocumentWithId';
+import createDocumentWithId from '../methods/createDocumentWithId';
+import fetchDocumentWithId from '../methods/fetchDocumentWithId';
+
+
 import { COLLECTIONS } from '../constants/collectionConst';
 
 const AppointmentModal = ({ appointment, onClose, onEdit, onDelete }) => {
@@ -28,21 +32,67 @@ const AppointmentModal = ({ appointment, onClose, onEdit, onDelete }) => {
   };
 
   const handlePaidUpdate = async (index, isPaid) => {
+    const client = clients[index];
+    const confirmMessage = `Are you sure you want to mark ${client.firstName} ${client.lastName} as paid?`;
+  
+    if (!window.confirm(confirmMessage)) return;
+  
     try {
       const updatedClients = [...clients];
       updatedClients[index].paid = isPaid;
-
+  
       await updateDocumentWithId(
         COLLECTIONS.APPOINTMENTS,
         { clients: updatedClients },
         appointment.id
       );
+  
+      if (isPaid) {
+        await handleFinancialUpdate(client, service);
+      }
+  
+      alert(`${client.firstName} ${client.lastName} marked as paid.`);
       onClose();
     } catch (error) {
       console.error("Failed to update payment:", error);
       alert("Error updating payment status.");
     }
   };
+  
+
+const handleFinancialUpdate = async (client, service) => {
+  try {
+    const now = new Date();
+    const docId = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+    const newIncomeEntry = {
+      type: `${service?.serviceName} - ${client.firstName} ${client.lastName}`,
+      value: client.ammountToPay,
+      details: { client, service },
+    };
+
+    const financialDoc = await fetchDocumentWithId(COLLECTIONS.FINANCIALS, docId);
+
+    if (financialDoc) {
+      const updatedIncome = Array.isArray(financialDoc.income)
+        ? [...financialDoc.income, newIncomeEntry]
+        : [newIncomeEntry];
+
+      await updateDocumentWithId(COLLECTIONS.FINANCIALS, { income: updatedIncome }, docId);
+    } else {
+      await createDocumentWithId(COLLECTIONS.FINANCIALS, {
+        income: [newIncomeEntry],
+        expense: [],
+      }, docId);
+    }
+  } catch (error) {
+    console.error("Failed to update financials:", error);
+    alert("Warning: Payment was recorded, but financial entry could not be created.");
+  }
+};
+
+  
+  
 
   return (
     <div className="modal show fade d-block" tabIndex="-1" role="dialog" style={{ background: 'rgba(0,0,0,0.5)' }}>
@@ -56,42 +106,38 @@ const AppointmentModal = ({ appointment, onClose, onEdit, onDelete }) => {
           <div className="modal-body">
             <h6><strong>Clients:</strong></h6>
             {clients.map((client, index) => (
-              <div key={index} className="mb-2">
-                <p className="mb-1">
-                  <strong>Name:</strong> {client.firstName} {client.lastName}
-                </p>
-                <p className="mb-1">
-                  <strong>Phone:</strong> {client.phoneNumber}
-                </p>
-                <p className="mb-2">
-                  <strong>Amount:</strong> {client.ammountToPay} $
-                  {client.paid ? (
-                    <span className="text-success"><i className="bi bi-check-circle-fill"></i> Yes</span>
-                  ) : (
-                    <span className="text-danger"><i className="bi bi-x-circle-fill"></i> No</span>
-                  )}
-                </p>
-                <div className="d-flex gap-2 mb-3">
+                <div key={index} className="mb-2">
+                  <p className="mb-1">
+                    <strong>Name:</strong> {client.firstName} {client.lastName}
+                  </p>
+                  <p className="mb-1">
+                    <strong>Phone:</strong> {client.phoneNumber}
+                  </p>
+                  <p className="mb-2">
+                    <strong>Amount:</strong> {client.ammountToPay} $
+                    {client.paid ? (
+                      <span className="text-success ms-2">
+                        <i className="bi bi-check-circle-fill"></i> Yes
+                      </span>
+                    ) : (
+                      <span className="text-danger ms-2">
+                        <i className="bi bi-x-circle-fill"></i> No
+                      </span>
+                    )}
+                  </p>
                   {!client.paid && (
-                    <button
-                      className="btn btn-sm btn-outline-success"
-                      onClick={() => handlePaidUpdate(index, true)}
-                    >
-                      <i className="bi bi-cash-coin"></i> Mark as Paid
-                    </button>
+                    <div className="d-flex gap-2 mb-3">
+                      <button
+                        className="btn btn-sm btn-outline-success"
+                        onClick={() => handlePaidUpdate(index, true)}
+                      >
+                        <i className="bi bi-cash-coin"></i> Mark as Paid
+                      </button>
+                    </div>
                   )}
-                  {client.paid && (
-                    <button
-                      className="btn btn-sm btn-outline-danger"
-                      onClick={() => handlePaidUpdate(index, false)}
-                    >
-                      <i className="bi bi-cash-coin"></i> Mark as Unpaid
-                    </button>
-                  )}
+                  <hr />
                 </div>
-                <hr />
-              </div>
-            ))}
+              ))}
 
             <p><strong>Service:</strong> {service?.serviceName}</p>
             <p><strong>Description:</strong> {service?.serviceDescription}</p>

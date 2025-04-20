@@ -134,7 +134,7 @@ const AppointmentForm = () => {
         mailAddress: c.mailAddress,
         relativeName: c.relativeName || "",
         relativePhoneNumber: c.relativePhoneNumber || "",
-        paid: c.paid || false,
+        paid: false,
         ammountToPay : selectedService.sessionPrice,
       })),
       service: selectedService,
@@ -152,6 +152,7 @@ const AppointmentForm = () => {
         await createDocument(appointmentData, COLLECTIONS.APPOINTMENTS);
         alert('Appointment Created Successfully');
       }
+
       navigate('/schedule');
     } catch (e) {
       alert('Error saving appointment. Please try again later or call Antonato');
@@ -258,22 +259,6 @@ const AppointmentForm = () => {
                   <p><strong>Mail:</strong> {client.mailAddress}</p>
                   {client.relativeName && <p><strong>Relative Name:</strong> {client.relativeName}</p>}
                   {client.relativePhoneNumber && <p><strong>Relative Phone:</strong> {client.relativePhoneNumber}</p>}
-                  <div className="form-check">
-                    <input
-                      type="checkbox"
-                      className="form-check-input"
-                      id={`paid-${client.id}`}
-                      checked={client.paid}
-                      onChange={(e) => {
-                        const updatedClients = [...selectedClients];
-                        updatedClients[index].paid = e.target.checked;
-                        setSelectedClients(updatedClients);
-                      }}
-                    />
-                    <label className="form-check-label" htmlFor={`paid-${client.id}`}>
-                      Paid
-                    </label>
-                  </div>
                 </div>
               ))}
             </div>

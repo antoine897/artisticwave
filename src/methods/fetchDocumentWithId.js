@@ -16,7 +16,7 @@ const fetchDocumentWithId = async (collectionName, documentId) => {
       return docSnap.data();
     } else {
       console.warn('No such document!');
-      return {};
+      return null;
     }
   } catch (e) {
     throw Error('Error getting document: ', e);

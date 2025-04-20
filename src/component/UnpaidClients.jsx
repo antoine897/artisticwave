@@ -1,128 +1,150 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
-import { Link } from "react-router-dom";
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import fetchClientsWithUnpaidStatus from '../methods/fetchClientsWithUnpaidStatus';
+import { useNavigate } from "react-router-dom";
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import sendFinancialRecapEmail from '../methods/sendFinancialRecapEmail';
+
+import "../css/style.css"; 
 
 const UnpaidClients = () => {
-
-    /* ********************************************************************** */
-    // Verify that the user was authorized
+    const [clients, setClients] = useState([]);
+    const [expandedClientId, setExpandedClientId] = useState(null);
     const navigate = useNavigate();
     const auth = getAuth();
     const [isLoading, setIsLoading] = useState(true);
     const [isAuthorized, setIsAuthorized] = useState(false);
+
     useEffect(() => {
-      const unsubscribe = onAuthStateChanged(auth, (user) => {
-        if (!user) {
-          navigate('/');
-        } else {
-          setIsAuthorized(true);
-          setIsLoading(false);
-        }
-      });
-  
-      return () => unsubscribe();
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                navigate('/');
+            } else {
+                setIsAuthorized(true);
+                setIsLoading(false);
+            }
+        });
+
+        return () => unsubscribe();
     }, [auth, navigate]);
-    /* ********************************************************************** */
 
-  const [users, setUsers] = useState([]);
+    useEffect(() => {
+        const fetchData = async () => {
+            const unpaidClients = await fetchClientsWithUnpaidStatus();
+            setClients(unpaidClients);
+        };
 
-  useEffect(() => {
-    const fetchAllUser = async () => {
-      try {
-        const res = await axios.get("http://localhost:8800/users");
-        const unpaid = res.data.filter((user) => user.Status !== "Paid");
-        setUsers(unpaid);
-      } catch (err) {
-        console.error(err);
-      }
+        fetchData();
+    }, []);
+
+    const validateEmail = (email) => {
+        const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return regex.test(email);
     };
-    fetchAllUser();
-  }, []);
 
-  const handleDelete = (iduser) => {
-    const isConfirmed = window.confirm("Are you sure you want to delete this user?");
-    if (isConfirmed) {
-      setUsers((prevUsers) => prevUsers.filter((user) => user.iduser !== iduser));
-      // Optionally send delete request to backend:
-      axios.delete(`http://localhost:8800/users/${iduser}`).catch((err) => console.log(err));
-    }
-  };
+    const handleSendEmail = async (client, e) => {
+        e.stopPropagation();
 
-    // This is to display a cicular loading while fetching data and authorisation
-  /* ********************************************************************** */
-  if (isLoading) {
+        let clientEmail = client.mailAddress;
+
+        if (!clientEmail) {
+            clientEmail = prompt("This client doesn't have an email address. Please enter one:");
+            if (!validateEmail(clientEmail)) {
+                alert("Invalid email format. Please try again.");
+                return;
+            }
+            client.mailAddress = clientEmail; // Only in memory for now
+        }
+
+        const confirmed = window.confirm(`Send payment reminder to ${client.firstName} ${client.lastName} at ${client.mailAddress}?`);
+        if (!confirmed) return;
+
+        try {
+            await sendFinancialRecapEmail(client);
+            alert(`Email successfully sent to ${client.mailAddress}`);
+        } catch (err) {
+            alert("An error occurred while sending the email. Please try again later or contact Antonato.");
+        }
+    };
+
+    const handleRowClick = (clientId) => {
+        setExpandedClientId(expandedClientId === clientId ? null : clientId);
+    };
+
+    if (isLoading) return <div>Loading...</div>;
+    if (!isAuthorized) return null;
+
     return (
-      <div>
-        Loading
-      </div>
-    );
-  }
+        <div className="container py-5">
+            <div className="d-flex justify-content-between align-items-center mb-4">
+                <h2 className="mb-0">Clients with Unpaid Appointments</h2>
+                <button className="btn btn-outline-primary fw-bold fs-5" onClick={() => navigate('/schedule')}>← Back</button>
+            </div>
 
-  if (!isAuthorized) {
-    return null;
-  }
-  /* ********************************************************************** */
+            <div className="table-responsive">
+                <table className="table table-striped table-hover align-middle">
+                    <thead className="table-dark">
+                        <tr>
+                            <th>Client Name</th>
+                            <th>Phone Number</th>
+                            <th>Mail Address</th>
+                            <th>Total Owed</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {clients.map(client => (
+                            <React.Fragment key={client.id}>
+                                <tr onClick={() => handleRowClick(client.id)}>
+                                    <td>{client.firstName} {client.lastName}</td>
+                                    <td>{client.phoneNumber}</td>
+                                    <td>{client.mailAddress || <span className="text-danger">No email</span>}</td>
+                                    <td>${client.totalOwed}</td>
+                                    <td>
+                                        <button
+                                            className="btn btn-primary btn-sm"
+                                            onClick={(e) => handleSendEmail(client, e)}
+                                        >
+                                            Send Reminder Email
+                                        </button>
+                                    </td>
+                                </tr>
 
-  return (
-    <div className="container py-5">
-    <div className="d-flex justify-content-between align-items-center mb-4">
-      <h2 className="mb-0">All Clients</h2>
-      <button className="btn btn-outline-primary fw-bold fs-5" onClick={() => navigate('/schedule')}>← Back</button>
-    </div>
-        {users.length === 0 ? (
-          <div className="alert alert-info mt-4">
-            There is no unpaid student.
-          </div>
-        ) : (
-          <table className="table table-striped mt-4">
-            <thead>
-              <tr>
-                <th>First Name</th>
-                <th>Last Name</th>
-                <th>Phone Number</th>
-                <th>Date</th>
-                <th>Time</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((user) => (
-                <tr key={user.iduser}>
-                  <td>{user.FirstName}</td>
-                  <td>{user.LastName}</td>
-                  <td>{user.PhoneNumber}</td>
-                  <td>{user.Date}</td>
-                  <td>{user.Time}</td>
-                  <td>{user.Status}</td>
-                  <td>
-                    <button
-                      className="btn btn-danger btn-sm"
-                      onClick={() => handleDelete(user.iduser)}
-                    >
-                      Delete
-                    </button>
-                    <button className="btn btn-warning btn-sm ms-2">
-                      <Link
-                        to={`/UpdateUserForm/${user.iduser}`}
-                        className="text-white text-decoration-none"
-                      >
-                        Update
-                      </Link>
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-    </div>
-        
-    
+                                {expandedClientId === client.id && (
+                                    <tr>
+                                        <td colSpan="5">
+                                            <div>
+                                                <h5>Appointments Details</h5>
+                                                <table className="table table-striped">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Service Name</th>
+                                                            <th>Appointment Date</th>
+                                                            <th>Amount</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {client.appointments.map((appointment, index) => (
+                                                            <tr key={index}>
+                                                                <td>{appointment.serviceName}</td>
+                                                                <td>
+                                                                    {new Date(appointment.dateFrom).toLocaleString()} - {new Date(appointment.dateTo).toLocaleString()}
+                                                                </td>
+                                                                <td>${appointment.amount}</td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                )}
+                            </React.Fragment>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     );
-    
 };
 
 export default UnpaidClients;

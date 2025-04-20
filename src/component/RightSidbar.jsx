@@ -34,7 +34,7 @@ const RightSidebar = ({ onClose, isOpen }) => {
           <ul className="list-unstyled text-start ps-3 mt-2">
             <li><Link to="/clients" onClick={onClose}>All Clients</Link></li>
             <li><Link to="/clients/add" onClick={onClose}>Add New Client</Link></li>
-            <li><Link to="/UnpaidClients" onClick={onClose}>Unpaid Clients</Link></li>
+            <li><Link to="/unpaidclients" onClick={onClose}>Unpaid Clients</Link></li>
           </ul>
         </div>
       </div>
@@ -83,7 +83,8 @@ const RightSidebar = ({ onClose, isOpen }) => {
         </div>
         <div className={`collapse ${isFinancialMenuOpen ? "show" : ""}`}>
           <ul className="list-unstyled text-start ps-3 mt-2">
-            <li><Link to="/ViewReports" onClick={onClose}>View Report</Link></li>
+            <li><Link to="/viewreports" onClick={onClose}>View Report</Link></li>
+            <li><Link to="/financials" onClick={onClose}>Add Depence/Income</Link></li>
           </ul>
         </div>
       </div>

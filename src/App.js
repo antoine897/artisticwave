@@ -5,16 +5,17 @@ import { AuthProvider } from './auth/AuthContext';
 
 import Login from './component/Login';
 import Schedule from "./component/Schedule";
+import AppointmentForm from './component/AppointmentForm';
 import ListClients from "./component/ListClients";
 import ClientForm from "./component/ClientForm";
+import UnpaidClients from "./component/UnpaidClients";
+
 import ListServices from "./component/ListServices";
 import ServiceForm from './component/ServiceForm';
 
-import FinancialRecap from './component/FinancialRecap';
 
-import UnpaidClients from "./component/UnpaidClients";
 import ViewReports from "./component/ViewReports";
-import AppointmentForm from './component/AppointmentForm';
+import Financials from './component/Financials';
 
 
 import NotFound from './component/NotFound';
@@ -32,13 +33,14 @@ function App() {
               <Route path="/clients" element={<ListClients />} />
               <Route path="/client/:id" element={<ClientForm />} />
               <Route path="/clients/add" element={<ClientForm />} /> 
+              <Route path="/unpaidclients" element={<UnpaidClients />} />
               <Route path="/services" element={<ListServices />} />
               <Route path="/service/:id" element={<ServiceForm />} />
               <Route path="/services/add" element={<ServiceForm />} /> 
-              <Route path="/financialRecap" element={<FinancialRecap />} /> 
               
-              <Route path="/UnpaidClients" element={<UnpaidClients />} />
-              {/* <Route path="/viewReports" element={<ViewReports />} /> */}
+              <Route path="/viewreports" element={<ViewReports />} />
+              <Route path="/financials" element={<Financials />} /> 
+
               <Route path="*" element={<NotFound />} />
             </Routes>
         </Router>
