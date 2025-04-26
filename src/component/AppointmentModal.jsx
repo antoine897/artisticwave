@@ -40,7 +40,8 @@ const AppointmentModal = ({ appointment, onClose, onEdit, onDelete }) => {
     try {
       const updatedClients = [...clients];
       updatedClients[index].paid = isPaid;
-  
+      const client = updatedClients[index];
+
       await updateDocumentWithId(
         COLLECTIONS.APPOINTMENTS,
         { clients: updatedClients },

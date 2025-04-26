@@ -15,10 +15,10 @@ const Financials = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);
 
-  const [entryType, setEntryType] = useState('income'); 
+  const [entryType, setEntryType] = useState('income');
   const [type, setType] = useState('');
   const [value, setValue] = useState('');
-  const [details, setDetails] = useState('');
+  const [description, setDescription] = useState('');
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -35,29 +35,30 @@ const Financials = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
-    if (!type || !value || isNaN(value)) {
-      alert("Please fill in valid type and numeric value.");
+
+    if (!entryType || !type.trim() || !value || isNaN(value)) {
+      alert("Please fill in all required fields with valid values.");
       return;
     }
-  
+
     const now = new Date();
     const docId = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`;
     const newEntry = {
-      type,
+      type: type.trim(),
       value: Number(value),
       details: {
-        description: details
+        description: description.trim()
       }
     };
-  
+
     try {
       const existingDoc = await fetchDocumentWithId(COLLECTIONS.FINANCIALS, docId);
+
       if (existingDoc) {
         const updatedList = Array.isArray(existingDoc[entryType])
           ? [...existingDoc[entryType], newEntry]
           : [newEntry];
-  
+
         await updateDocumentWithId(COLLECTIONS.FINANCIALS, {
           [entryType]: updatedList
         }, docId);
@@ -66,20 +67,20 @@ const Financials = () => {
           income: entryType === 'income' ? [newEntry] : [],
           expense: entryType === 'expense' ? [newEntry] : []
         };
-  
+
         await createDocumentWithId(COLLECTIONS.FINANCIALS, initialData, docId);
       }
-  
-      alert(`${entryType === 'income' ? 'Income' : 'Expense'} added successfully`);
+
+      alert(`${entryType === 'income' ? 'Income' : 'Expense'} added successfully.`);
+      setEntryType('income');
       setType('');
       setValue('');
-      setDetails('');
+      setDescription('');
     } catch (error) {
       console.error("Error saving financial entry:", error);
       alert("Something went wrong. Please try again.");
     }
   };
-  
 
   if (isLoading) return <div>Loading...</div>;
   if (!isAuthorized) return null;
@@ -89,36 +90,44 @@ const Financials = () => {
       <div className="w-50 mx-auto">
         <div className="d-flex justify-content-between align-items-center mb-4">
           <h2 className="mb-3 mt-5">Add Financial Entry</h2>
-          <button className="btn btn-outline-primary fw-bold fs-5" onClick={() => navigate(-1)}>← Back</button>
+          <button
+            className="btn btn-outline-primary fw-bold fs-5"
+            onClick={() => navigate(-1)}
+          >
+            ← Back
+          </button>
         </div>
 
         <form onSubmit={handleSubmit}>
+          {/* Entry Type Selector */}
           <div className="mb-3">
-            <label className="form-label">Entry Type</label>
+            <label className="form-label">Entry Type<span className="text-danger">*</span></label>
             <select
               className="form-select"
               value={entryType}
               onChange={(e) => setEntryType(e.target.value)}
+              required
             >
               <option value="income">Income</option>
               <option value="expense">Expense</option>
             </select>
           </div>
 
+          {/* Type Input */}
           <div className="mb-3">
-            <label className="form-label">Type</label>
+            <label className="form-label">Type<span className="text-danger">*</span></label>
             <input
-              type="text"
               className="form-control"
-              placeholder="e.g., Consultation - John Doe"
+              placeholder="e.g., Rent, Salary, Shopping"
               value={type}
               onChange={(e) => setType(e.target.value)}
               required
             />
           </div>
 
+          {/* Value Input */}
           <div className="mb-3">
-            <label className="form-label">Value ($)</label>
+            <label className="form-label">Value ($)<span className="text-danger">*</span></label>
             <input
               type="number"
               className="form-control"
@@ -131,13 +140,14 @@ const Financials = () => {
             />
           </div>
 
+          {/* Description Input */}
           <div className="mb-3">
-            <label className="form-label">Details</label>
+            <label className="form-label">Description</label>
             <textarea
               className="form-control"
               placeholder="Optional additional notes"
-              value={details}
-              onChange={(e) => setDetails(e.target.value)}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
             />
           </div>
 

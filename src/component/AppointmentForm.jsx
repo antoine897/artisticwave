@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import DatePicker from 'react-datepicker';
-import '../../node_modules/react-datepicker/dist/react-datepicker.css';
+import 'react-datepicker/dist/react-datepicker.css';
 import { format, addMinutes } from 'date-fns';
 import "../css/style.css";
 
@@ -25,8 +25,9 @@ const AppointmentForm = () => {
   const [services, setServices] = useState([]);
 
   const [selectedService, setSelectedService] = useState(null);
-  const [date, setDate] = useState(null);
+  const [selectedDates, setSelectedDates] = useState([]); // Multiple dates
   const [selectedClients, setSelectedClients] = useState([]);
+  const [tempDate, setTempDate] = useState(null); // Temporarily store selected date
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -64,14 +65,11 @@ const AppointmentForm = () => {
         const appointmentData = await fetchDocumentWithId(COLLECTIONS.APPOINTMENTS, id);
         if (appointmentData) {
           setIsEditMode(true);
-
           const service = services.find(s => s.id === appointmentData.service?.id);
           if (service) setSelectedService(service);
-
           if (appointmentData.dateFrom) {
-            setDate(new Date(appointmentData.dateFrom));
+            setSelectedDates([new Date(appointmentData.dateFrom)]);
           }
-
           if (appointmentData.clients?.length) {
             const matchedClients = clients.filter(c => appointmentData.clients.find(ac => ac.id === c.id));
             const clientsWithPaidStatus = matchedClients.map(c => {
@@ -97,10 +95,24 @@ const AppointmentForm = () => {
     return selectedService.availableDays.includes(dayName);
   };
 
+  const handleAddDate = () => {
+    if (!tempDate) return;
+    const isDuplicate = selectedDates.some(d => d.getTime() === tempDate.getTime());
+    if (!isDuplicate) {
+      setSelectedDates([...selectedDates, tempDate]);
+    }
+    setTempDate(null);
+  };
+
+  const handleRemoveDate = (date) => {
+    const newDates = selectedDates.filter(d => d.getTime() !== date.getTime());
+    setSelectedDates(newDates);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!selectedService || !date || selectedClients.length === 0) {
+    if (!selectedService || selectedDates.length === 0 || selectedClients.length === 0) {
       alert("Please fill all fields.");
       return;
     }
@@ -111,21 +123,29 @@ const AppointmentForm = () => {
     }
 
     const duration = selectedService.serviceDuration || 30;
-    const startDate = date;
-    const endDate = addMinutes(startDate, duration);
+    let hasConflict = false;
 
-    const hasConflict = await checkAppointmentConflict(
-      COLLECTIONS.APPOINTMENTS,
-      startDate,
-      endDate
-    );
+    for (let selectedDate of selectedDates) {
+      const startDate = selectedDate;
+      const endDate = addMinutes(startDate, duration);
+      const conflict = await checkAppointmentConflict(
+        COLLECTIONS.APPOINTMENTS,
+        startDate,
+        endDate,
+        selectedService
+      );
+      if (conflict) {
+        hasConflict = true;
+        break;
+      }
+    }
 
     if (hasConflict) {
       alert("Appointment conflict detected. Please choose a different time.");
       return;
     }
 
-    const appointmentData = {
+    const appointmentData = selectedDates.map((selectedDate) => ({
       clients: selectedClients.map(c => ({
         id: c.id,
         firstName: c.firstName,
@@ -135,21 +155,23 @@ const AppointmentForm = () => {
         relativeName: c.relativeName || "",
         relativePhoneNumber: c.relativePhoneNumber || "",
         paid: false,
-        ammountToPay : selectedService.sessionPrice,
+        ammountToPay: selectedService.sessionPrice,
       })),
       service: selectedService,
-      dateFrom: startDate.toISOString(),
-      dateTo: endDate.toISOString(),
+      dateFrom: selectedDate.toISOString(),
+      dateTo: addMinutes(selectedDate, duration).toISOString(),
       status: 'new',
       createdDate: new Date().toISOString(),
-    };
+    }));
 
     try {
       if (isEditMode && id) {
         await updateDocumentWithId(COLLECTIONS.APPOINTMENTS, appointmentData, id);
         alert('Appointment Updated Successfully');
       } else {
-        await createDocument(appointmentData, COLLECTIONS.APPOINTMENTS);
+        for (let data of appointmentData) {
+          await createDocument(data, COLLECTIONS.APPOINTMENTS);
+        }
         alert('Appointment Created Successfully');
       }
 
@@ -171,7 +193,6 @@ const AppointmentForm = () => {
         </div>
 
         <form onSubmit={handleSubmit}>
-          {/* Service Select */}
           <div className="mb-3">
             <label htmlFor="serviceSelect" className="form-label">Select Service</label>
             <select
@@ -181,7 +202,7 @@ const AppointmentForm = () => {
               onChange={(e) => {
                 const selected = services.find(s => s.id === e.target.value);
                 setSelectedService(selected);
-                setDate(null);
+                setSelectedDates([]);
                 setSelectedClients([]);
               }}
               required
@@ -195,27 +216,47 @@ const AppointmentForm = () => {
             </select>
           </div>
 
-          {/* Date Picker */}
+          {/* Custom multiple date-time selector */}
           {selectedService && (
             <div className="mb-3">
-              <label className="form-label">Select Date</label>
-              <DatePicker
-                selected={date}
-                onChange={(date) => {
-                  setDate(date);
-                  setSelectedClients([]);
-                }}
-                filterDate={isDayAvailable}
-                showTimeSelect
-                timeIntervals={15}
-                dateFormat="Pp"
-                className="form-control"
-              />
+              <label className="form-label">Select Date and Time</label>
+              <div className="d-flex gap-2">
+                <DatePicker
+                  selected={tempDate}
+                  onChange={(date) => setTempDate(date)}
+                  filterDate={isDayAvailable}
+                  showTimeSelect
+                  timeIntervals={15}
+                  dateFormat="Pp"
+                  className="form-control"
+                />
+                <button type="button" className="btn btn-success" onClick={handleAddDate}>Add</button>
+              </div>
+              <div className="form-text mt-1">
+                {selectedService.studentNumber > 1
+                  ? 'Group class: multiple clients can book this time.'
+                  : 'One-on-one session: exclusive time slot.'}
+              </div>
             </div>
           )}
 
-          {/* Client Multi-Select */}
-          {selectedService && date && (
+          {/* Display selected dates */}
+          {selectedDates.length > 0 && (
+            <div className="mb-3">
+              <h5>Selected Dates:</h5>
+              <ul>
+                {selectedDates.map((date, index) => (
+                  <li key={index}>
+                    {format(date, 'PPPppp')}{" "}
+                    <button type="button" className="btn btn-danger btn-sm" onClick={() => handleRemoveDate(date)}>Remove</button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Client selection */}
+          {selectedService && selectedDates.length > 0 && (
             <div className="mb-3">
               <label htmlFor="clientSelect" className="form-label">
                 Select Clients ({selectedClients.length}/{selectedService.studentNumber})
@@ -248,23 +289,7 @@ const AppointmentForm = () => {
             </div>
           )}
 
-          {/* Per-Client Info & Paid Checkbox */}
-          {selectedClients.length > 0 && (
-            <div className="mb-3">
-              <h5>Client Details:</h5>
-              {selectedClients.map((client, index) => (
-                <div key={client.id} className="border rounded p-2 mb-2">
-                  <p><strong>Name:</strong> {client.firstName} {client.lastName}</p>
-                  <p><strong>Phone:</strong> {client.phoneNumber}</p>
-                  <p><strong>Mail:</strong> {client.mailAddress}</p>
-                  {client.relativeName && <p><strong>Relative Name:</strong> {client.relativeName}</p>}
-                  {client.relativePhoneNumber && <p><strong>Relative Phone:</strong> {client.relativePhoneNumber}</p>}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Submit Button */}
+          {/* Submit */}
           <div>
             <button type="submit" className="btn btn-primary">
               {isEditMode ? 'Update Appointment' : 'Add Appointment'}

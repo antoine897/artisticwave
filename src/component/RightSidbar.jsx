@@ -1,13 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { SignOut } from '../methods/SignOut';
 
 const RightSidebar = ({ onClose, isOpen }) => {
   const navigate = useNavigate();
-  const [isClientsMenuOpen, setIsClientsMenuOpen] = useState(false);
-  const [isServicesMenuOpen, setIsServicesMenuOpen] = useState(false);
-  const [isAppointmentsMenuOpen, setIsAppointmentsMenuOpen] = useState(false);
-  const [isFinancialMenuOpen, setIsFinancialMenuOpen] = useState(false); // ✅ Financial menu state
+  const [openMenu, setOpenMenu] = useState(null);
+  const sidebarRef = useRef(null);
 
   const handleSignOut = () => {
     SignOut()
@@ -15,22 +13,33 @@ const RightSidebar = ({ onClose, isOpen }) => {
       .catch((error) => console.error('Sign out failed:', error.message));
   };
 
+  const toggleMenu = (menuName) => {
+    setOpenMenu((prev) => (prev === menuName ? null : menuName));
+  };
+
+  // ✅ Close when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isOpen && sidebarRef.current && !sidebarRef.current.contains(event.target)) {
+        onClose();
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isOpen, onClose]);
+
   return (
-    <div className={`right-sidebar ${isOpen ? "open" : ""}`}>
+    <div ref={sidebarRef} className={`right-sidebar ${isOpen ? "open" : ""}`}>
       <div className="position-relative p-3 border-bottom text-center">
         <h5 className="mb-0 text-primary menu-hover" onClick={onClose}>Menu</h5>
       </div>
 
       {/* Clients */}
       <div className="p-3">
-        <div
-          className="fw-bold text-start"
-          style={{ cursor: "pointer" }}
-          onClick={() => setIsClientsMenuOpen(!isClientsMenuOpen)}
-        >
+        <div className="fw-bold text-start" style={{ cursor: "pointer" }} onClick={() => toggleMenu("clients")}>
           Clients
         </div>
-        <div className={`collapse ${isClientsMenuOpen ? "show" : ""}`}>
+        <div className={`collapse ${openMenu === "clients" ? "show" : ""}`}>
           <ul className="list-unstyled text-start ps-3 mt-2">
             <li><Link to="/clients" onClick={onClose}>All Clients</Link></li>
             <li><Link to="/clients/add" onClick={onClose}>Add New Client</Link></li>
@@ -41,14 +50,10 @@ const RightSidebar = ({ onClose, isOpen }) => {
 
       {/* Services */}
       <div className="p-3">
-        <div
-          className="fw-bold text-start"
-          style={{ cursor: "pointer" }}
-          onClick={() => setIsServicesMenuOpen(!isServicesMenuOpen)}
-        >
+        <div className="fw-bold text-start" style={{ cursor: "pointer" }} onClick={() => toggleMenu("services")}>
           Services
         </div>
-        <div className={`collapse ${isServicesMenuOpen ? "show" : ""}`}>
+        <div className={`collapse ${openMenu === "services" ? "show" : ""}`}>
           <ul className="list-unstyled text-start ps-3 mt-2">
             <li><Link to="/services" onClick={onClose}>All Services</Link></li>
             <li><Link to="/services/add" onClick={onClose}>Add Service</Link></li>
@@ -58,30 +63,22 @@ const RightSidebar = ({ onClose, isOpen }) => {
 
       {/* Appointments */}
       <div className="p-3">
-        <div
-          className="fw-bold text-start"
-          style={{ cursor: "pointer" }}
-          onClick={() => setIsAppointmentsMenuOpen(!isAppointmentsMenuOpen)}
-        >
+        <div className="fw-bold text-start" style={{ cursor: "pointer" }} onClick={() => toggleMenu("appointments")}>
           Appointments
         </div>
-        <div className={`collapse ${isAppointmentsMenuOpen ? "show" : ""}`}>
+        <div className={`collapse ${openMenu === "appointments" ? "show" : ""}`}>
           <ul className="list-unstyled text-start ps-3 mt-2">
             <li><Link to="/appointments/add" onClick={onClose}>Add Appointment</Link></li>
           </ul>
         </div>
       </div>
 
-      {/* ✅ Financial */}
+      {/* Financial */}
       <div className="p-3">
-        <div
-          className="fw-bold text-start"
-          style={{ cursor: "pointer" }}
-          onClick={() => setIsFinancialMenuOpen(!isFinancialMenuOpen)}
-        >
+        <div className="fw-bold text-start" style={{ cursor: "pointer" }} onClick={() => toggleMenu("financial")}>
           Financial
         </div>
-        <div className={`collapse ${isFinancialMenuOpen ? "show" : ""}`}>
+        <div className={`collapse ${openMenu === "financial" ? "show" : ""}`}>
           <ul className="list-unstyled text-start ps-3 mt-2">
             <li><Link to="/viewreports" onClick={onClose}>View Report</Link></li>
             <li><Link to="/financials" onClick={onClose}>Add Depence/Income</Link></li>
@@ -91,20 +88,17 @@ const RightSidebar = ({ onClose, isOpen }) => {
 
       {/* Sign Out */}
       <div className="p-3">
-  <div
-    className="fw-bold text-start"
-    style={{ cursor: "pointer" }}
-    onClick={() => {
-      const confirmLogout = window.confirm("Are you sure you want to log out?");
-      if (confirmLogout) {
-        handleSignOut();
-      }
-    }}
-  >
-    Sign Out
-  </div>
-</div>
-
+        <div
+          className="fw-bold text-start"
+          style={{ cursor: "pointer" }}
+          onClick={() => {
+            const confirmLogout = window.confirm("Are you sure you want to log out?");
+            if (confirmLogout) handleSignOut();
+          }}
+        >
+          Sign Out
+        </div>
+      </div>
     </div>
   );
 };

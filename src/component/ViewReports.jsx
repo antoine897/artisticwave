@@ -1,270 +1,204 @@
-// import React, { useEffect, useState } from "react";
-// import axios from "axios";
-// import { useNavigate } from 'react-router-dom';
-// import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from 'react-router-dom';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { Table } from 'react-bootstrap';
+import { COLLECTIONS } from '../constants/collectionConst';
+import fetchDocuments from '../methods/fetchDocuments'; // Must fetch docs with IDs
+import "../css/style.css";
 
-// const ViewReports = () => {
-//   const [appointments, setAppointments] = useState([]);
-//   const [totalAmount, setTotalAmount] = useState(0);
-//   const [privateAmounts, setPrivateAmounts] = useState(0);
-//   const [classAmounts, setClassAmounts] = useState({});
-//   const [monthlyAmounts, setMonthlyAmounts] = useState({});
-//   const [selectedMonth, setSelectedMonth] = useState("");
-//   const [selectedYear, setSelectedYear] = useState("");
-//   const [filteredAmount, setFilteredAmount] = useState({ private: 0, class: 0 });
-//   const [unpaidMessage, setUnpaidMessage] = useState("");
-//   const [years, setYears] = useState([]);
-//   const [showTotalAmount, setShowTotalAmount] = useState(false);
-//   const [showUnpaidMessage, setShowUnpaidMessage] = useState(false);
+const MONTH_NAMES = [
+  "", "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+];
 
-//   const cors = require('cors');
-// app.use(cors());
+const ViewReports = () => {
+  const [financialData, setFinancialData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [yearlyData, setYearlyData] = useState({});
+  const [expandedYear, setExpandedYear] = useState(null);
+  const [expandedMonths, setExpandedMonths] = useState({});
 
-//   // Firebase Authentication for user verification
-//   const navigate = useNavigate();
-//   const auth = getAuth();
-//   const [isLoading, setIsLoading] = useState(true);
-//   const [isAuthorized, setIsAuthorized] = useState(false);
+  const auth = getAuth();
+  const navigate = useNavigate();
 
-//   useEffect(() => {
-//     const unsubscribe = onAuthStateChanged(auth, (user) => {
-//       if (!user) {
-//         navigate('/');
-//       } else {
-//         setIsAuthorized(true);
-//         setIsLoading(false);
-//       }
-//     });
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        navigate('/');
+      } else {
+        setIsAuthorized(true);
+      }
+      setIsLoading(false);
+    });
 
-//     return () => unsubscribe();
-//   }, [auth, navigate]);
+    return () => unsubscribe();
+  }, [auth, navigate]);
 
-//   // Fetching appointment data
-//   useEffect(() => {
-//     const fetchAppointments = async () => {
-//       try {
-//         const res = await axios.get("http://localhost:8800/appointments"); // Adjust the API endpoint as needed
-//         setAppointments(res.data);
+  useEffect(() => {
+    if (!isAuthorized) return;
 
-//         // Extract distinct years from appointments data
-//         const uniqueYears = [
-//           ...new Set(res.data.map((appointment) => new Date(appointment.date).getFullYear())),
-//         ].sort((a, b) => b - a); // Sort years in descending order
-//         setYears(uniqueYears);
+    const loadFinancials = async () => {
+      try {
+        const rawDocs = await fetchDocuments(COLLECTIONS.FINANCIALS);
+        setFinancialData(rawDocs);
+        setYearlyData(transformFinancialData(rawDocs));
+      } catch (error) {
+        console.error("Error loading Financials:", error);
+      }
+    };
 
-//         // Filter unpaid appointments by type
-//         const unpaidPrivateAppointments = res.data.filter(
-//           (appointments) => appointments.status !== "Paid" && appointments.type === "Private"
-//         );
-//         const unpaidClassAppointments = res.data.filter(
-//           (appointments) => appointments.status !== "Paid" && appointments.type === "Class"
-//         );
+    loadFinancials();
+  }, [isAuthorized]);
 
-//   // Fetching appointment data
-//   useEffect(() => {
-//     const fetchAppointments = async () => {
-//       try {
-//         const res = await axios.get("http://localhost:8800/appointments"); // Adjust the API endpoint as needed
-//         setAppointments(res.data);
 
-//     fetchAppointments();
-//   }, []);
+  const transformFinancialData = (docs) => {
+    const structured = {};
 
-//   // Recalculating totals when year or appointments data change
-//   useEffect(() => {
-//     if (appointments.length === 0) return;
+    docs.forEach((doc) => {
+      const { id, income = [], expense = [] } = doc;
+      const year = id.slice(0, 4);
+      const month = id.slice(4);
 
-//     const total = appointments.reduce((sum, appointment) => {
-//       if (appointment.status === "Paid" && !isNaN(parseFloat(appointment.amount))) {
-//         const appointmentDate = new Date(appointment.date);
-//         if (selectedYear && appointmentDate.getFullYear() !== parseInt(selectedYear)) {
-//           return sum;
-//         }
-//         return sum + parseFloat(appointment.amount);
-//       }
-//       return sum;
-//     }, 0);
+      if (!structured[year]) structured[year] = {};
 
-//     const privateTotal = appointments.reduce((sum, appointment) => {
-//       if (appointment.status === "Paid" && appointment.type === "Private" && !isNaN(parseFloat(appointment.amount))) {
-//         const appointmentDate = new Date(appointment.date);
-//         if (selectedYear && appointmentDate.getFullYear() !== parseInt(selectedYear)) {
-//           return sum;
-//         }
-//         return sum + parseFloat(appointment.amount);
-//       }
-//       return sum;
-//     }, 0);
+      const monthIncome = income.reduce((acc, item) => acc + parseFloat(item.value || 0), 0);
+      const monthExpense = expense.reduce((acc, item) => acc + parseFloat(item.value || 0), 0);
 
-//     const classTotal = appointments.reduce((sum, appointment) => {
-//       if (appointment.status === "Paid" && appointment.type === "Class" && !isNaN(parseFloat(appointment.amount))) {
-//         const appointmentDate = new Date(appointment.date);
-//         const month = `${appointmentDate.getMonth() + 1}-${appointmentDate.getFullYear()}`;
-//         if (selectedYear && appointmentDate.getFullYear() !== parseInt(selectedYear)) {
-//           return sum;
-//         }
-//         if (!sum[month]) {
-//           sum[month] = 0;
-//         }
-//         sum[month] += parseFloat(appointment.amount);
-//       }
-//       return sum;
-//     }, {});
+      if (monthIncome > 0 || monthExpense > 0) {
+        structured[year][month] = {
+          id,
+          income,
+          expense,
+          totalIncome: monthIncome,
+          totalExpense: monthExpense,
+          net: monthIncome - monthExpense,
+        };
+      }
+    });
 
-//     setTotalAmount(total);
-//     setPrivateAmounts(privateTotal);
-//     setClassAmounts(classTotal);
+    return structured;
+  };
 
-//     const monthly = appointments.reduce((acc, appointment) => {
-//       if (appointment.status === "Paid" && !isNaN(parseFloat(appointment.amount))) {
-//         const appointmentDate = new Date(appointment.date);
-//         const month = `${appointmentDate.getMonth() + 1}-${appointmentDate.getFullYear()}`;
-//         const category = appointment.type;
-//         if (selectedYear && appointmentDate.getFullYear() !== parseInt(selectedYear)) {
-//           return acc;
-//         }
-//         if (!acc[month]) {
-//           acc[month] = { Private: 0, Class: 0 };
-//         }
-//         acc[month][category] = acc[month][category]
-//           ? acc[month][category] + parseFloat(appointment.amount)
-//           : parseFloat(appointment.amount);
-//       }
-//       return acc;
-//     }, {});
+  const toggleYear = (year) => {
+    setExpandedYear(prev => (prev === year ? null : year));
+    setExpandedMonths({}); // Reset months when changing year
+  };
 
-//     setMonthlyAmounts(monthly);
-//   }, [selectedYear, appointments]);
+  const toggleMonth = (year, month) => {
+    const key = `${year}-${month}`;
+    setExpandedMonths(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }));
+  };
 
-//   // Handling month selection
-//   const handleMonthChange = (event) => {
-//     const month = event.target.value;
-//     setSelectedMonth(month);
+  const getMonthName = (monthNumber) => {
+    const num = parseInt(monthNumber, 10);
+    return MONTH_NAMES[num] || monthNumber;
+  };
 
-//     if (month) {
-//       const selectedMonthData = monthlyAmounts[month] || { Private: 0, Class: 0 };
-//       setFilteredAmount({
-//         private: selectedMonthData.Private || 0,
-//         class: selectedMonthData.Class || 0,
-//       });
-//     } else {
-//       setFilteredAmount({ private: privateAmounts, class: classAmounts });
-//     }
-//   };
+  if (isLoading) return <div>Loading...</div>;
+  if (!isAuthorized) return null;
 
-//   // Handling year selection
-//   const handleYearChange = (event) => {
-//     const year = event.target.value;
-//     setSelectedYear(year);
-//   };
+  return (
+    <div className="container mt-5">
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h3>Financial Report</h3>
+        <button className="btn btn-outline-primary fw-bold fs-5" onClick={() => navigate(-1)}>← Back</button>
+      </div>
 
-//   // Formatting amounts
-//   const formatAmount = (amount) => {
-//     return isNaN(amount) ? 0 : amount.toFixed(2);
-//   };
+      <div className="mt-5">
+        <h4>Yearly Summary</h4>
+        <Table striped bordered hover>
+          <thead>
+            <tr>
+              <th>Year</th>
+              <th>Total Income</th>
+              <th>Total Expense</th>
+              <th>Net Gain/Loss</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Object.entries(yearlyData).map(([year, months]) => {
+              const totalIncome = Object.values(months).reduce((acc, m) => acc + m.totalIncome, 0);
+              const totalExpense = Object.values(months).reduce((acc, m) => acc + m.totalExpense, 0);
+              const net = totalIncome - totalExpense;
 
-//   // Toggling visibility of total amount and unpaid message
-//   const toggleTotalAmount = () => {
-//     setShowTotalAmount(!showTotalAmount);
-//     setShowUnpaidMessage(!showUnpaidMessage);
-//   };
+              return (
+                <React.Fragment key={year}>
+                  <tr onClick={() => toggleYear(year)} style={{ cursor: "pointer" }}>
+                    <td>{year}</td>
+                    <td style={{ color: "green" }}>${totalIncome.toFixed(2)}</td>
+                    <td style={{ color: "red" }}>${totalExpense.toFixed(2)}</td>
+                    <td style={{ color: net >= 0 ? "green" : "red" }}>${net.toFixed(2)}</td>
+                  </tr>
 
-//   // Loading and authorization state
-//   if (isLoading) {
-//     return <div>Loading...</div>;
-//   }
+                  {expandedYear === year &&
+                    Object.entries(months).map(([monthKey, monthData]) => {
+                      const isExpanded = expandedMonths[`${year}-${monthKey}`];
 
-//   if (!isAuthorized) {
-//     return null;
-//   }
+                      return (
+                        <React.Fragment key={`${year}-${monthKey}`}>
+                          <tr
+                            onClick={() => toggleMonth(year, monthKey)}
+                            style={{ cursor: "pointer", backgroundColor: "#f8f9fa" }}
+                          >
+                            <td className="ps-4">{getMonthName(monthKey)}</td>
+                            <td style={{ color: "green" }}>${monthData?.totalIncome?.toFixed(2) || "0.00"}</td>
+                            <td style={{ color: "red" }}>${monthData?.totalExpense?.toFixed(2) || "0.00"}</td>
+                            <td style={{ color: (monthData?.net || 0) >= 0 ? "green" : "red" }}>
+                              ${(monthData?.net || 0).toFixed(2)}
+                            </td>
+                          </tr>
 
-//   return (
-//     <div className="container mt-5">
-//       {/* Year Dropdown */}
-//       <div className="mt-4">
-//         <h3>Select Year:</h3>
-//         <select
-//           className="form-select"
-//           value={selectedYear}
-//           onChange={handleYearChange}
-//         >
-//           <option value="">All Years</option>
-//           {years.map((year) => (
-//             <option key={year} value={year}>
-//               {year}
-//             </option>
-//           ))}
-//         </select>
-//       </div>
+                          {isExpanded && monthData && (
+                            <tr>
+                              <td colSpan={4}>
+                                <div className="monthly-table-container">
+                                  <Table striped bordered hover size="sm">
+                                    <thead>
+                                      <tr>
+                                        <th>Entry</th>
+                                        <th>Description</th>
+                                        <th>Details</th>
+                                        <th>Amount</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {(monthData.income || []).map((item, idx) => (
+                                        <tr key={`inc-${idx}`}>
+                                          <td style={{ color: "green" }}>Income</td>
+                                          <td>{item.type || "-"}</td>
+                                          <td>{item.details?.description || "-"}</td>
+                                          <td style={{ color: "green" }}>${parseFloat(item.value).toFixed(2)}</td>
+                                        </tr>
+                                      ))}
+                                      {(monthData.expense || []).map((item, idx) => (
+                                        <tr key={`exp-${idx}`}>
+                                          <td style={{ color: "red" }}>Expense</td>
+                                          <td>{item.type || "-"}</td>
+                                          <td>{item.details?.description || "-"}</td>
+                                          <td style={{ color: "red" }}>${parseFloat(item.value).toFixed(2)}</td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </Table>
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </React.Fragment>
+                      );
+                    })}
+                </React.Fragment>
+              );
+            })}
+          </tbody>
+        </Table>
+      </div>
+    </div>
+  );
+};
 
-//       {/* Total Paid Amount */}
-//       {selectedYear && (
-//         <h2
-//           onClick={toggleTotalAmount}
-//           style={{
-//             cursor: "pointer",
-//             display: "inline",
-//             marginRight: "20px",
-//           }}
-//         >
-//           Total Paid Appointments Amount: ${formatAmount(totalAmount)}
-//         </h2>
-//       )}
-
-//       {/* Display Total Amounts if visible */}
-//       {showTotalAmount && selectedYear && (
-//         <div style={{ display: "inline" }}>
-//           <p className="mt-4" style={{ display: "inline", marginRight: "20px" }}>
-//             Private Appointments Total Paid: ${formatAmount(privateAmounts)}
-//           </p>
-//           <p className="mt-4" style={{ display: "inline" }}>
-//             Classes Total Paid: ${formatAmount(Object.values(classAmounts).reduce((sum, amount) => sum + amount, 0))}
-//           </p>
-//         </div>
-//       )}
-
-//       {/* Unpaid Message */}
-//       {unpaidMessage && selectedYear && (
-//         <div className="mt-3">
-//           {showUnpaidMessage && <p style={{ color: "red" }}>{unpaidMessage}</p>}
-//         </div>
-//       )}
-
-//       {/* Month Dropdown */}
-//       <div className="mt-4">
-//         <h3>Monthly Report</h3>
-//         <label htmlFor="monthSelect">Select Month:</label>
-//         <select
-//           id="monthSelect"
-//           className="form-select"
-//           value={selectedMonth}
-//           onChange={handleMonthChange}
-//         >
-//           <option value="">All Time</option>
-//           {Object.keys(monthlyAmounts).map((month) => (
-//             <option key={month} value={month}>
-//               {month}
-//             </option>
-//           ))}
-//         </select>
-//       </div>
-
-//       {/* Display Filtered Amount for Selected Month */}
-//       {selectedMonth && (
-//         <>
-//           <h3 className="mt-4">Paid Amount for {selectedMonth}:</h3>
-//           <p>Private Appointments: ${formatAmount(filteredAmount.private)}</p>
-//           <p>Class Appointments: ${formatAmount(filteredAmount.class)}</p>
-
-//           {/* Display Total of the Selected Month */}
-//           <h3 className="mt-4">Total of Selected Month:</h3>
-//           <p>
-//             ${formatAmount(filteredAmount.private + filteredAmount.class)}
-//           </p>
-//         </>
-//       )}
-//     </div>
-//   );
-// };
-
-// export default ViewReports;
+export default ViewReports;
