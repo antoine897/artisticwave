@@ -86,17 +86,27 @@ const RightSidebar = ({ onClose, isOpen }) => {
         </div>
       </div>
 
-      {/* Sign Out */}
+      {/* Account */}
       <div className="p-3">
-        <div
-          className="fw-bold text-start"
-          style={{ cursor: "pointer" }}
-          onClick={() => {
-            const confirmLogout = window.confirm("Are you sure you want to log out?");
-            if (confirmLogout) handleSignOut();
-          }}
-        >
-          Sign Out
+        <div className="fw-bold text-start" style={{ cursor: "pointer" }} onClick={() => toggleMenu("account")}>
+          Account
+        </div>
+        <div className={`collapse ${openMenu === "account" ? "show" : ""}`}>
+          <ul className="list-unstyled text-start ps-3 mt-2">
+            <li><Link to="/change-password" onClick={onClose}>Change Password</Link></li>
+            <li>
+              <Link
+              className="fw-bold text-start"
+              style={{ cursor: "pointer" }}
+              onClick={() => {
+                const confirmLogout = window.confirm("Are you sure you want to log out?");
+                if (confirmLogout) handleSignOut();
+              }}
+            >
+              Sign Out
+              </Link>
+            </li>
+          </ul>
         </div>
       </div>
     </div>

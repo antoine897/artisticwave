@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Form, Button, Container, Row, Col } from 'react-bootstrap';
 
 import { useAuth } from '../auth/AuthContext';
@@ -15,18 +15,16 @@ const Login = () => {
   const [errorMessage, setErrorMessage] = useState("");
 
   const handleSubmit = async (e) => {
-
     e.preventDefault();
         
     signInWithEmailAndPassword(auth, email, password)
-    .then(cred => {
-            setUserDetails(cred.user);
-            navigate('/schedule');     
-    })
-    .catch(err => {
-      setErrorMessage("Username or Password is incorrect");
-    });
-
+      .then(cred => {
+        setUserDetails(cred.user);
+        navigate('/schedule');     
+      })
+      .catch(err => {
+        setErrorMessage("Username or Password is incorrect");
+      });
   };
 
   return (
@@ -59,6 +57,13 @@ const Login = () => {
               Login
             </Button>
           </Form>
+
+          {/* Forgot Password Link */}
+          <div className="text-center mt-3">
+            <Link to="/forgot-password" className="text-decoration-none">
+              Forgot Password?
+            </Link>
+          </div>
 
           {/* Render error message if any */}
           {errorMessage && <p className="text-danger mt-3">{errorMessage}</p>}
